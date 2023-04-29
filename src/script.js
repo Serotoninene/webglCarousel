@@ -29,6 +29,7 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
+
 /**
  * Objects
  */
@@ -57,15 +58,17 @@ const texturePromises = texturesToLoad.map((textureToLoad) =>
 );
 
 // Objects
+let centerX = window.innerWidth / 2
 const meshWidth = 3
 const margin = 4.5
 const n = 9
+const wholeWidth = n  * margin
+
 let meshes = []
 
 let material = []
 
 for(let i = 0; i < n; i++){
-
   material[i] = new THREE.ShaderMaterial({
     uniforms:{
       uScrollY: { value: 0.0 },
@@ -97,7 +100,6 @@ const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
 }
-let centerX = window.innerWidth / 2
 
 window.addEventListener('resize', () =>
 {
@@ -164,24 +166,28 @@ window.addEventListener('mousewheel', (e) =>
  */
 const clock = new THREE.Clock()
 let previousTime = 0
-const wholeWidth = n  * margin
+
+const ease = t => t * t * (3 - 2 * t)
+
+const easeOut = (t) => {
+  return Math.sin(t * Math.PI / 2);
+}
 
 const updateMeshes = () => {
-
-
-  meshes.forEach((o,i)=> {    
+  meshes.forEach((o,i)=> {   
     o.position.x = (i * margin % wholeWidth +currentScroll * 0.01 +42069*wholeWidth)%wholeWidth - 2 * margin
-    const distanceFromCenter = Math.sqrt(Math.pow(o.position.x - centerX, 2));
-    const normalizedDistance = (distanceFromCenter / centerX ) - 1;
+    const distanceFromCenter = o.position.x / centerX
+
+
+
 
     material[i].uniforms.uDistanceFromCenter.value = distanceFromCenter;
 
-    o.rotation.z = normalizedDistance * 100
-    o.position.y= Math.abs( normalizedDistance) * -1 * 200
+    o.rotation.z = distanceFromCenter * 100
+    o.position.y =THREE.MathUtils.lerp(o.position.y, Math.abs(distanceFromCenter * 250) * -1, 0.1)
   })
 
 }
-
 
 const tick = () =>
 {
