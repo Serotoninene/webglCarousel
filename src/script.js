@@ -20,6 +20,21 @@ gui
         particlesMaterial.color.set(parameters.materialColor)
     })
 
+
+
+/**
+ * Setting up values 
+ */
+const meshWidth = 3
+const margin = 4.5
+const n = 9
+const wholeWidth = n  * margin
+
+let centerX = window.innerWidth / 2
+let meshes = []
+let material = []
+
+
 /**
  * Base
  */
@@ -57,17 +72,9 @@ const texturePromises = texturesToLoad.map((textureToLoad) =>
   })
 );
 
+//
+
 // Objects
-let centerX = window.innerWidth / 2
-const meshWidth = 3
-const margin = 4.5
-const n = 9
-const wholeWidth = n  * margin
-
-let meshes = []
-
-let material = []
-
 for(let i = 0; i < n; i++){
   material[i] = new THREE.ShaderMaterial({
     uniforms:{
@@ -153,12 +160,10 @@ window.addEventListener('mousewheel', (e) =>
   scrollTarget = e.wheelDeltaY * 0.3;
 
   if (scrollTarget > 0) {
-    currentPlane = Math.ceil(currentScroll / sizes.width);
+    currentPlane = Math.ceil(currentScroll / sizes.height *2);
   } else {
-    currentPlane = Math.floor(currentScroll / sizes.width);
+    currentPlane = Math.floor(currentScroll / sizes.height *2);
   }
-
-  console.log(currentPlane)
 })
 
 /**
@@ -166,12 +171,6 @@ window.addEventListener('mousewheel', (e) =>
  */
 const clock = new THREE.Clock()
 let previousTime = 0
-
-const ease = t => t * t * (3 - 2 * t)
-
-const easeOut = (t) => {
-  return Math.sin(t * Math.PI / 2);
-}
 
 const updateMeshes = () => {
   meshes.forEach((o,i)=> {   
@@ -184,7 +183,7 @@ const updateMeshes = () => {
     material[i].uniforms.uDistanceFromCenter.value = distanceFromCenter;
 
     o.rotation.z = distanceFromCenter * 100
-    o.position.y =THREE.MathUtils.lerp(o.position.y, Math.abs(distanceFromCenter * 250) * -1, 0.1)
+    o.position.y =THREE.MathUtils.lerp(o.position.y, Math.abs(distanceFromCenter * 250) * -1, 0.7)
   })
 
 }
