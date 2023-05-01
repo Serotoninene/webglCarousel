@@ -25,11 +25,12 @@ gui
 /**
  * Setting up values 
  */
-const meshWidth = 3
-const margin = 4.5
-const n = 3
+const meshWidth = 2
+const meshHeight = 2
+const margin = 3.5
+const n = 9
 const wholeWidth = n  * margin
-const snapThreshold = 0.05; // adjust this value to determine the sensitivity of the snap
+const snapThreshold = 1; // adjust this value to determine the sensitivity of the snap
 
 const group = new THREE.Group();
 
@@ -76,8 +77,6 @@ const texturePromises = texturesToLoad.map((textureToLoad) =>
   })
 );
 
-//
-
 // Objects
 for(let i = 0; i < n; i++){
   material[i] = new THREE.ShaderMaterial({
@@ -95,9 +94,11 @@ for(let i = 0; i < n; i++){
   });
 
   const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(meshWidth, 3,64,64),
+    new THREE.PlaneGeometry(meshWidth, meshHeight,64,64),
     material[i]
   )
+
+  mesh.position.x = i * margin % wholeWidth 
 
   meshes.push(mesh)
   group.add(mesh)
@@ -159,12 +160,15 @@ let scrollTarget = 0
 let scrollSpead = 0 
 let currentScroll = 0
 
+
 window.addEventListener('mousewheel', (e) =>
 {
   scrollTarget = e.wheelDeltaY * 0.3
 
+  console.log(currentScroll)
+  console.log(currentScroll / sizes.height)
   if (scrollTarget > 0) {
-    currentPlane = Math.abs(Math.ceil(currentScroll / sizes.height * 2))% n
+    currentPlane = Math.abs(Math.ceil(currentScroll / sizes.height )) % n
   } else {
     currentPlane = Math.abs(Math.floor(currentScroll / sizes.height * 2)) % n
     group.position.x = currentPlane * wholeWidth * margin
@@ -177,37 +181,24 @@ window.addEventListener('mousewheel', (e) =>
 const clock = new THREE.Clock()
 let previousTime = 0
 
+// get width of the screen in ndc values
+const ndcWidth = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * camera.position.z
+
 const updateMeshes = () => {
+  console.log(currentPlane)
+  meshes.forEach((o,i)=> {  
+    // o.position.x = (i * margin % wholeWidth + currentScroll * 0.01 +42069*wholeWidth)%wholeWidth - 2 * margin
+    o.position.x += currentScroll * 0.01
+    let rounded = Math.round(o.position.x / margin) * margin
 
-  // check if the scroll has stopped
-  // if (Math.abs(scrollSpead) < snapThreshold && currentPlane !== null) {
-  //   // snap the plane to the center
-  //   const targetX = centerX;
-  //   const planeX = meshes[currentPlane].position.x;
-  //   meshes[currentPlane].position.x = THREE.MathUtils.lerp(planeX, targetX, 0.1);
-  // } else {
-    // update the plane positions as usual
-    meshes.forEach((o,i)=> {  
-      // o.position.x = (i * margin % wholeWidth + currentScroll * 0.01 +42069*wholeWidth)%wholeWidth - 2 * margin
-      o.position.x = THREE.MathUtils.lerp(o.position.x, i * margin % wholeWidth + currentScroll * 0.01 , 0.1)
+    let diff =  rounded - o.position.x
+    o.position.x += Math.sign(diff)*Math.pow(Math.abs(diff), 0.5) * 0.05
+    
+    o.rotation.z = o.position.x * -0.1
 
-      // [] for the snap, I need to translate the distance between a mesh and the center into a NDC value (between -1 and 1)
-      // [] then I add it to the o.position, doing sthg like o.position.x += .... 
-
-      // here is an exemple of how could do it but i'm not sure it works (from chatGpt)
-      const normalizedCenterX = THREE.MathUtils.mapLinear(centerX, 0, sizes.width, -1,1)
-      const distanceFromCenter = o.position.x / centerX 
-      // console.log(o.position.x)
-      // const ndcValue = pixelValue / (Math.min(width, height) / 2) - 1;
-
-      o.position.x += distanceFromCenter
-
-      material[i].uniforms.uDistanceFromCenter.value = distanceFromCenter;
-
-      o.rotation.z = distanceFromCenter * 100
-      o.position.y =THREE.MathUtils.lerp(o.position.y, Math.abs(distanceFromCenter * 250) * -1, 0.7)
-    });
-  // }
+    // o.position.z=  Math.abs(o.position.x) * -10
+    o.position.y =THREE.MathUtils.lerp(o.position.y, Math.abs(o.position.x *0.5) * -1, 0.7)
+  });
 }
 
 const tick = () =>
@@ -219,18 +210,15 @@ const tick = () =>
     scrollSpead += (scrollTarget - scrollSpead) * 0.8
     scrollSpead *= 0.9
     scrollTarget *= 0.9
-    currentScroll += scrollSpead * 0.5
+    currentScroll = scrollSpead * 0.5
 
+    
+  
 
     meshes.forEach((_,i) => {
       material[i].uniforms.uScrollY.value = scrollTarget / sizes.height ;
     })
-
-    
-
     updateMeshes()
-    // Animate camera
-    // camera.position.x = 1.1 * -currentScroll / sizes.height * objectsDistance
 
     const parallaxX = 0
     const parallaxY = 0
