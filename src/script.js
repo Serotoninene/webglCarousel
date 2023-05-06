@@ -1,231 +1,227 @@
-import * as THREE from 'three'
-import * as dat from 'lil-gui'
-import testVertexShader from './shaders/test/vertex.glsl'
-import testFragmentShader from './shaders/test/fragment.glsl'
+import * as THREE from "three";
+import * as dat from "lil-gui";
+import testVertexShader from "./shaders/picture/vertex.glsl";
+import testFragmentShader from "./shaders/picture/fragment.glsl";
 
 /**
  * Debug
  */
-const gui = new dat.GUI()
+// const gui = new dat.GUI();
 
-const parameters = {
-    materialColor: '#ffeded'
-}
+// const parameters = {
+//   materialColor: "#ffeded",
+// };
 
-gui
-    .addColor(parameters, 'materialColor')
-    .onChange(() =>
-    {
-        material.color.set(parameters.materialColor)
-        particlesMaterial.color.set(parameters.materialColor)
-    })
-
-
+// gui
+//     .addColor(parameters, 'materialColor')
+//     .onChange(() =>
+//     {
+//         material.color.set(parameters.materialColor)
+//         particlesMaterial.color.set(parameters.materialColor)
+//     })
 
 /**
- * Setting up values 
+ * Setting up values
  */
-const meshWidth = 3
-const meshHeight = 3
-const margin = 3.5
-const n = 8
-const wholeWidth = n  * margin
+const meshWidth = 2.3;
+const meshHeight = 2.3;
+const margin = 3.5;
+const n = 9;
+const wholeWidth = n * margin;
 
 const group = new THREE.Group();
 
-let currentPlane = 0
-let meshes = []
-let material = []
-
+let currentPlane = 0;
+let meshes = [];
+let material = [];
 
 /**
  * Base
  */
 // Canvas
-const canvas = document.querySelector('canvas.webgl')
+const canvas = document.querySelector("canvas.webgl");
 
 // Scene
-const scene = new THREE.Scene()
-
+const scene = new THREE.Scene();
 
 /**
  * Objects
  */
 // Texture
-const textureLoader = new THREE.TextureLoader()
-const texture = textureLoader.load('/textures/texture1.jpg')
+const textureLoader = new THREE.TextureLoader();
+const texture = textureLoader.load("/textures/texture1.jpg");
 
 const texturesToLoad = [
-  '/textures/texture1.jpg', 
-  '/textures/texture2.jpg', 
-  '/textures/texture3.jpg', 
-  '/textures/texture4.jpg', 
-  '/textures/texture5.jpg', 
-  '/textures/texture6.jpg', 
-  '/textures/texture7.jpg', 
-  '/textures/texture8.jpg',
-  '/textures/texture9.jpg'
+  "/textures/texture1.jpg",
+  "/textures/texture2.jpg",
+  "/textures/texture3.jpg",
+  "/textures/texture4.jpg",
+  "/textures/texture5.jpg",
+  "/textures/texture6.jpg",
+  "/textures/texture7.jpg",
+  "/textures/texture8.jpg",
+  "/textures/texture9.jpg",
 ];
 
-const texturePromises = texturesToLoad.map((textureToLoad) =>
-  new Promise((resolve) => {
-    textureLoader.load(textureToLoad, (texture) => {
-      resolve(texture);
-    });
-  })
+const texturePromises = texturesToLoad.map(
+  (textureToLoad) =>
+    new Promise((resolve) => {
+      textureLoader.load(textureToLoad, (texture) => {
+        resolve(texture);
+      });
+    })
 );
 
 // Objects
-for(let i = 0; i < n; i++){
+for (let i = 0; i < n; i++) {
   material[i] = new THREE.ShaderMaterial({
-    uniforms:{
+    uniforms: {
       uScrollY: { value: 0.0 },
-      uTime: { value : 0.0 },
-      uDistanceFromCenter : {value : 0.0},
-      uTexture : {value : texture}
+      uTime: { value: 0.0 },
+      uDistanceFromCenter: { value: 0.0 },
+      uTexture: { value: texture },
     },
     vertexShader: testVertexShader,
-    fragmentShader:testFragmentShader,
-
-  })
+    fragmentShader: testFragmentShader,
+  });
 
   Promise.all(texturePromises).then((textures) => {
-    material[i].uniforms.uTexture.value = textures[i]
+    material[i].uniforms.uTexture.value = textures[i];
   });
 
   const mesh = new THREE.Mesh(
     new THREE.PlaneGeometry(meshWidth, meshHeight, 128, 128),
     material[i]
-  )
+  );
 
-  mesh.position.x = i * margin 
+  mesh.position.x = i * margin;
 
-  meshes.push(mesh)
-  group.add(mesh)
-  scene.add(mesh)
+  meshes.push(mesh);
+  group.add(mesh);
+  scene.add(mesh);
 }
 
 /**
  * Sizes
  */
 const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
-}
+  width: window.innerWidth,
+  height: window.innerHeight,
+};
 
-window.addEventListener('resize', () =>
-{
+window.addEventListener("resize", () => {
   // Update sizes
-  sizes.width = window.innerWidth
-  sizes.height = window.innerHeight
+  sizes.width = window.innerWidth;
+  sizes.height = window.innerHeight;
 
   // Update camera
-  camera.aspect = sizes.width / sizes.height
-  camera.updateProjectionMatrix()
+  camera.aspect = sizes.width / sizes.height;
+  camera.updateProjectionMatrix();
 
   // Update renderer
-  renderer.setSize(sizes.width, sizes.height)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-})
+  renderer.setSize(sizes.width, sizes.height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
 
 /**
  * Camera
  */
 // Group
-const cameraGroup = new THREE.Group()
-scene.add(cameraGroup)
+const cameraGroup = new THREE.Group();
+scene.add(cameraGroup);
 
 // Base camera
-const camera = new THREE.PerspectiveCamera(35, sizes.width / sizes.height, 0.1, 100)
-camera.position.z = 6
+const camera = new THREE.PerspectiveCamera(
+  35,
+  sizes.width / sizes.height,
+  0.1,
+  100
+);
+camera.position.z = 6;
 /**
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    alpha: true
-})
-renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  canvas: canvas,
+  alpha: true,
+});
+renderer.setSize(sizes.width, sizes.height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 /**
  * Scroll
  */
+let scrollTarget = 0;
+let scrollSpead = 0;
+let currentScroll = 0;
 
-
-let scrollTarget = 0
-let scrollSpead = 0 
-let currentScroll = 0
-
-
-window.addEventListener('mousewheel', (e) =>
-{
-  scrollTarget = e.wheelDeltaY * 0.3
-  console.log(currentPlane)
-})
+window.addEventListener("mousewheel", (e) => {
+  scrollTarget = e.wheelDeltaY * 0.3;
+});
 
 /**
  * Animate
  */
-const clock = new THREE.Clock()
-let previousTime = 0
-
-// get width of the screen in ndc values
-const ndcWidth = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * camera.position.z
+const clock = new THREE.Clock();
+let previousTime = 0;
 
 const updateMeshes = () => {
-  meshes.forEach((o,i)=> {  
-    o.position.x += currentScroll * 0.01
+  meshes.forEach((o, i) => {
+    o.position.x += currentScroll * 0.01;
     // If the mesh goes out of bounds on the left side, move it to the right
-    if (o.position.x < -wholeWidth / 2) o.position.x += wholeWidth
+    if (o.position.x < -wholeWidth / 2) o.position.x += wholeWidth;
     // If the mesh goes out of bounds on the right side, move it to the left
-    if (o.position.x > wholeWidth / 2) o.position.x -= wholeWidth
-    
+    if (o.position.x > wholeWidth / 2) o.position.x -= wholeWidth;
 
-    let rounded = Math.round(o.position.x / margin) * margin
+    // ======== snapping effect ========
+    let rounded = Math.round(o.position.x / margin) * margin;
+    let diff = rounded - o.position.x;
+    o.position.x += Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.025;
 
-    let diff =  rounded - o.position.x
-    // o.position.x += diff * 0.05
-    o.position.x += Math.sign(diff)*Math.pow(Math.abs(diff), 0.5) * 0.05
+    // ======== rotation effect ========
+    o.rotation.z = o.position.x * -0.1;
 
-    o.rotation.z = o.position.x * -0.1
-    o.position.y += Math.abs(o.position.x *0.5) * -1
-    o.position.y *= 0.3
+    // ======== position Y in function of distance from center effect ========
+    o.position.y = 0.2;
+    o.position.y += Math.abs(o.position.x * 0.5) * -1;
+    // o.position.y += Math.abs(Math.sin(o.position.x * 0.5)) * -1;
+    o.position.y *= 0.5;
 
-    // define the index of the currentPlane in the center, the camera doesn't move, it's the planes that are moving
-    if (rounded === 0){
-      currentPlane = i
+    // define the index of the currentPlane in the center
+    if (rounded === 0) {
+      currentPlane = i;
     }
   });
-}
+};
 
-const tick = () =>
-{
-  const elapsedTime = clock.getElapsedTime()
-  const deltaTime = elapsedTime - previousTime
-  previousTime = elapsedTime
+const tick = () => {
+  const elapsedTime = clock.getElapsedTime();
+  const deltaTime = elapsedTime - previousTime;
+  previousTime = elapsedTime;
 
-  scrollSpead += (scrollTarget - scrollSpead) * 0.8
-  scrollSpead *= 0.9
-  scrollTarget *= 0.9
-  currentScroll = scrollSpead * 0.5
+  scrollSpead += (scrollTarget - scrollSpead) * 0.8;
+  scrollSpead *= 0.9;
+  scrollTarget *= 0.9;
+  currentScroll = scrollSpead * 0.5;
 
-  meshes.forEach((_,i) => {
-    material[i].uniforms.uScrollY.value = scrollTarget / sizes.height ;
+  meshes.forEach((_, i) => {
+    material[i].uniforms.uScrollY.value = scrollTarget / sizes.height;
     material[i].uniforms.uTime.value = elapsedTime;
-  })
-  updateMeshes()
+  });
+  updateMeshes();
 
-  const parallaxX = 0
-  const parallaxY = 0
-  cameraGroup.position.x += (parallaxX - cameraGroup.position.x) * 5 * deltaTime
-  cameraGroup.position.y += (parallaxY - cameraGroup.position.y) * 5 * deltaTime
+  const parallaxX = 0;
+  const parallaxY = 0;
+  cameraGroup.position.x +=
+    (parallaxX - cameraGroup.position.x) * 5 * deltaTime;
+  cameraGroup.position.y +=
+    (parallaxY - cameraGroup.position.y) * 5 * deltaTime;
 
   // Render
-  renderer.render(scene, camera)
+  renderer.render(scene, camera);
 
   // Call tick again on the next frame
-  window.requestAnimationFrame(tick)
-}
+  window.requestAnimationFrame(tick);
+};
 
-tick()
+tick();

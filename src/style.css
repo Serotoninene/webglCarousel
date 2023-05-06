@@ -1,38 +1,63 @@
-*
-{
-    margin: 0;
-    padding: 0;
+* {
+  margin: 0;
+  padding: 0;
 }
 
-html
-{
-    background: #F1F0EC;
+html,
+body {
+  overscroll-behavior: none;
+  background: #f1f0ec;
+  font-family: "Karla", "Outfit", sans-serif;
 }
 
-.webgl
-{
-    position: fixed;
-    top: 0;
-    left: 0;
-    outline: none;
+.webgl {
+  position: fixed;
+  top: 0;
+  left: 0;
+  outline: none;
 }
 
-
-.section
-{
-    display: flex;
-    align-items: center;
-    height: 100vh;
-    position: relative;
-    font-family: 'Cabin', sans-serif;
-    color: #ffeded;
-    text-transform: uppercase;
-    font-size: 7vmin;
-    padding-left: 10%;
-    padding-right: 10%;
+.section {
+  display: flex;
+  align-items: center;
+  height: 100vh;
+  position: relative;
+  color: #ffeded;
+  text-transform: uppercase;
+  font-size: 7vmin;
+  padding-left: 10%;
+  padding-right: 10%;
 }
 
-section:nth-child(odd)
-{
-    justify-content: flex-end;
+section:nth-child(odd) {
+  justify-content: flex-end;
+}
+
+main {
+  height: 100vh;
+  color: #363e3a;
+}
+
+header {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 36px 54px;
+  font-weight: 700;
+  font-family: "Outfit", sans-serif;
+  font-size: 1.2rem;
+}
+
+header h1 {
+  font-size: 1.2rem;
+}
+
+header p {
+  font-family: "Karla", sans-serif;
+  font-size: 1rem;
+  text-align: center;
+}
+
+header div {
+  text-align: end;
+  font-family: "Outfit", sans-serif;
 }
