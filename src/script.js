@@ -1,24 +1,9 @@
 import * as THREE from "three";
-import * as dat from "lil-gui";
 import testVertexShader from "./shaders/picture/vertex.glsl";
 import testFragmentShader from "./shaders/picture/fragment.glsl";
+import gsap from "gsap";
 
-/**
- * Debug
- */
-// const gui = new dat.GUI();
-
-// const parameters = {
-//   materialColor: "#ffeded",
-// };
-
-// gui
-//     .addColor(parameters, 'materialColor')
-//     .onChange(() =>
-//     {
-//         material.color.set(parameters.materialColor)
-//         particlesMaterial.color.set(parameters.materialColor)
-//     })
+// ----------------- THREEJS PART -----------------  //
 
 /**
  * Setting up values
@@ -61,6 +46,63 @@ const texturesToLoad = [
   "/textures/texture7.jpg",
   "/textures/texture8.jpg",
   "/textures/texture9.jpg",
+];
+
+const content = [
+  {
+    id: 1,
+    name: "Extension d’une maison sur le port",
+    location: "description",
+    image: "/textures/texture1.jpg",
+  },
+  {
+    id: 2,
+    name: "Titre 1",
+    location: "description",
+    image: "/textures/texture2.jpg",
+  },
+  {
+    id: 2,
+    name: "Titre 2",
+    location: "description",
+    image: "/textures/texture3.jpg",
+  },
+  {
+    id: 3,
+    name: "Titre 3",
+    location: "description",
+    image: "/textures/texture4.jpg",
+  },
+  {
+    id: 4,
+    name: "Titre 4",
+    location: "description",
+    image: "/textures/texture5.jpg",
+  },
+  {
+    id: 5,
+    name: "Titre 5",
+    location: "description",
+    image: "/textures/texture6.jpg",
+  },
+  {
+    id: 6,
+    name: "Titre 6",
+    location: "description",
+    image: "/textures/texture7.jpg",
+  },
+  {
+    id: 7,
+    name: "Titre 7",
+    location: "description",
+    image: "/textures/texture8.jpg",
+  },
+  {
+    id: 8,
+    name: "Titre 8",
+    location: "description",
+    image: "/textures/texture9.jpg",
+  },
 ];
 
 const texturePromises = texturesToLoad.map(
@@ -154,16 +196,28 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 let scrollTarget = 0;
 let scrollSpead = 0;
 let currentScroll = 0;
+let isInMotion = false;
 
 window.addEventListener("mousewheel", (e) => {
   scrollTarget = e.wheelDeltaY * 0.3;
 });
 
 /**
+ * Mouse postion
+ */
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener("mousemove", (event) => {
+  mouse.x = (event.clientX / sizes.width) * 2 - 1;
+  mouse.y = -(event.clientY / sizes.height) * 2 + 1;
+});
+
+/**
  * Animate
  */
 const clock = new THREE.Clock();
-let previousTime = 0;
+let currentIntersect = null;
 
 const updateMeshes = () => {
   meshes.forEach((o, i) => {
@@ -176,7 +230,7 @@ const updateMeshes = () => {
     // ======== snapping effect ========
     let rounded = Math.round(o.position.x / margin) * margin;
     let diff = rounded - o.position.x;
-    o.position.x += Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.025;
+    o.position.x += Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.04;
 
     // ======== rotation effect ========
     o.rotation.z = o.position.x * -0.1;
@@ -191,8 +245,39 @@ const updateMeshes = () => {
     if (rounded === 0) {
       currentPlane = i;
     }
+
+    // define if the user is currently scrolling or no
+    if (Math.abs(diff) <= 0.002) {
+      isInMotion = false;
+    } else {
+      isInMotion = true;
+    }
+
+    // RayCaster and moseEvents
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(meshes);
+
+    if (intersects.length) {
+      currentIntersect = intersects[0];
+    }
+
+    window.addEventListener("click", () => {
+      if (currentIntersect) {
+        const { x } = currentIntersect.object.position;
+        if (Math.abs(x) >= 0.05) {
+          // if the user click on a plane on the left/right side -> centers it
+          scrollTarget = x * -1 * (wholeWidth - margin * 2.8);
+        } else {
+          // if the user click on a plane on the center -> open the project
+        }
+      }
+    });
   });
+
+  handlingGSAP();
 };
+
+let previousTime = 0;
 
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
@@ -208,6 +293,7 @@ const tick = () => {
     material[i].uniforms.uScrollY.value = scrollTarget / sizes.height;
     material[i].uniforms.uTime.value = elapsedTime;
   });
+
   updateMeshes();
 
   const parallaxX = 0;
@@ -225,3 +311,33 @@ const tick = () => {
 };
 
 tick();
+
+// ----------------- GSAP PART -----------------  //
+
+// when isInMotion === true, project description
+function handlingGSAP() {
+  const projectIndex = document.querySelector(".project-index span");
+  const projectName = document.querySelector(".project-name");
+  const projectLocation = document.querySelector(".project-location");
+
+  const array = [projectIndex, projectName, projectLocation];
+
+  if (isInMotion) {
+    gsap.to(array, {
+      stagger: 0.1,
+      opacity: 0,
+    });
+  } else {
+    // can you refactor the next 3 lines
+    const index = content[currentPlane].id.toString().padStart(2, "0");
+    const name = content[currentPlane].name;
+    const location = content[currentPlane].location;
+    projectIndex.textContent = `[${index}]`;
+    projectName.textContent = name;
+    projectLocation.textContent = location;
+    gsap.to(array, {
+      stagger: 0.1,
+      opacity: 1,
+    });
+  }
+}
