@@ -8,6 +8,7 @@ body {
   overscroll-behavior: none;
   background: #f1f0ec;
   font-family: "Karla", "Outfit", sans-serif;
+  font-weight: 400;
 }
 
 .webgl {
@@ -17,24 +18,11 @@ body {
   outline: none;
 }
 
-.section {
-  display: flex;
-  align-items: center;
-  height: 100vh;
-  position: relative;
-  color: #ffeded;
-  text-transform: uppercase;
-  font-size: 7vmin;
-  padding-left: 10%;
-  padding-right: 10%;
-}
-
-section:nth-child(odd) {
-  justify-content: flex-end;
-}
-
 main {
   height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   color: #363e3a;
 }
 
@@ -60,4 +48,37 @@ header p {
 header div {
   text-align: end;
   font-family: "Outfit", sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding-bottom: 22px;
+}
+
+section {
+  text-align: center;
+}
+
+.project-index {
+  color: #e17a58;
+  font-size: 10px;
+  margin-bottom: 8px;
+}
+
+.project-name {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.project-location {
+  font-size: 12px;
+}
+
+footer {
+  color: #bebfbb;
+  font-size: 12px;
 }
