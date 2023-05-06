@@ -8,7 +8,7 @@ void main()
 
   vec4 modelPosition = modelMatrix * vec4(position, 1.0);
   float offset = (modelPosition.x - uScrollY) * 0.5;
-  modelPosition.z += sin(modelPosition.x * 1.0) * 10. * uScrollY;
+  modelPosition.z += sin(modelPosition.x * 1.0) * 5. * uScrollY;
 
   vec4 viewPosition = viewMatrix * modelPosition;
   vec4 projectedPosition = projectionMatrix * viewPosition;

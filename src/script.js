@@ -214,6 +214,21 @@ window.addEventListener("mousemove", (event) => {
 });
 
 /**
+ * Mouse click
+ */
+window.addEventListener("click", () => {
+  if (currentIntersect) {
+    const { x } = currentIntersect.object.position;
+    if (Math.abs(x) >= 0.05) {
+      // if the user click on a plane on the left/right side -> centers it
+      scrollTarget = x * -1 * (wholeWidth - margin * 2.8);
+    } else {
+      // if the user click on a plane on the center -> open the project
+    }
+  }
+});
+
+/**
  * Animate
  */
 const clock = new THREE.Clock();
@@ -258,20 +273,12 @@ const updateMeshes = () => {
     const intersects = raycaster.intersectObjects(meshes);
 
     if (intersects.length) {
+      console.log(canvas.style.cursor);
       currentIntersect = intersects[0];
+      document.body.style.cursor = "pointer";
+    } else {
+      document.body.style.cursor = "auto";
     }
-
-    window.addEventListener("click", () => {
-      if (currentIntersect) {
-        const { x } = currentIntersect.object.position;
-        if (Math.abs(x) >= 0.05) {
-          // if the user click on a plane on the left/right side -> centers it
-          scrollTarget = x * -1 * (wholeWidth - margin * 2.8);
-        } else {
-          // if the user click on a plane on the center -> open the project
-        }
-      }
-    });
   });
 
   handlingGSAP();
