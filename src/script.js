@@ -79,9 +79,11 @@ const texturesToLoad = [
 // ----------------- GUI -----------------  //
 const settings = {
   progress: 0,
+  cameraZ: 100,
 };
 const gui = new GUI();
 gui.add(settings, "progress", 0, 1, 0.001);
+gui.add(settings, "cameraZ", 10, 1000, 1);
 
 /**
  * Setting up values
@@ -90,11 +92,11 @@ const sizes = {
   width: window.innerWidth,
   height: window.innerHeight,
 };
-const meshWidth = 2.3;
-const meshHeight = 2.3;
+const meshWidth = 30;
+const meshHeight = 30;
 const margin = 3.5;
-const n = 1;
-const wholeWidth = n * margin;
+const n = 9;
+const wholeWidth = n * (margin * 2) + meshWidth;
 const group = new THREE.Group();
 
 let currentPlane = 0;
@@ -174,7 +176,7 @@ for (let i = 0; i < n; i++) {
     material[i]
   );
 
-  mesh.position.x = i * margin;
+  mesh.position.x = i * margin * (meshWidth / 2);
 
   meshes.push(mesh);
   group.add(mesh);
@@ -188,10 +190,10 @@ for (let i = 0; i < n; i++) {
 const camera = new THREE.PerspectiveCamera(
   35,
   sizes.width / sizes.height,
-  0.1,
-  100
+  10,
+  1000
 );
-camera.position.z = 6;
+camera.position.z = settings.cameraZ;
 
 /**
  * Renderer
@@ -206,7 +208,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 /**
  * Scroll
  */
-let scrollTarget = wholeWidth * margin * n * 2.5;
+let scrollTarget = 0;
 let scrollSpead = 0;
 let currentScroll = 0;
 let isInMotion = false;
@@ -229,17 +231,17 @@ window.addEventListener("mousemove", (event) => {
 /**
  * Mouse click
  */
-window.addEventListener("click", () => {
-  if (currentIntersect) {
-    const { x } = currentIntersect.object.position;
-    if (Math.abs(x) >= 0.05) {
-      // if the user click on a plane on the left/right side -> centers it
-      scrollTarget = x * -1 * (wholeWidth - margin * 2.8);
-    } else {
-      // if the user click on a plane on the center -> open the project
-    }
-  }
-});
+// window.addEventListener("click", () => {
+//   if (currentIntersect) {
+//     const { x } = currentIntersect.object.position;
+//     if (Math.abs(x) >= 0.05) {
+//       // if the user click on a plane on the left/right side -> centers it
+//       scrollTarget = x * -1 * (wholeWidth - margin * 2.8);
+//     } else {
+//       // if the user click on a plane on the center -> open the project
+//     }
+//   }
+// });
 
 /**
  * Animate
@@ -249,19 +251,20 @@ let currentIntersect = null;
 
 const updateMeshes = () => {
   meshes.forEach((o, i) => {
-    o.position.x += currentScroll * 0.01;
-    // If the mesh goes out of bounds on the left side, move it to the right
-    if (o.position.x < -wholeWidth / 2) o.position.x += wholeWidth;
+    console.log(currentScroll);
+    o.position.x += currentScroll;
+    // // If the mesh goes out of bounds on the left side, move it to the right
+    if (o.position.x < -wholeWidth / 2) o.position.x += wholeWidth * n;
     // If the mesh goes out of bounds on the right side, move it to the left
-    if (o.position.x > wholeWidth / 2) o.position.x -= wholeWidth;
+    if (o.position.x > wholeWidth / 2) o.position.x -= wholeWidth * n;
 
     // ======== snapping effect ========
     let rounded = Math.round(o.position.x / margin) * margin;
     let diff = rounded - o.position.x;
-    o.position.x += Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.04;
+    // o.position.x += Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.04;
 
     // ======== rotation effect ========
-    o.rotation.z = o.position.x * -0.1;
+    // o.rotation.z = o.position.x * -0.1;
 
     // ======== position Y in function of distance from center effect ========
     o.position.y = 0.2;
@@ -301,11 +304,12 @@ let previousTime = 0;
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
   previousTime = elapsedTime;
+  camera.position.z = settings.cameraZ;
 
   scrollSpead += (scrollTarget - scrollSpead) * 0.8;
   scrollSpead *= 0.9;
   scrollTarget *= 0.9;
-  currentScroll = scrollSpead * 0.5;
+  currentScroll = scrollSpead * 0.05;
 
   // Update uniforms
   meshes.forEach((_, i) => {

@@ -17,7 +17,7 @@ void main()
   fullScreenState.x *= uResolution.x / uQuadSize.x;
   fullScreenState.y *= uResolution.y / uQuadSize.y;
   vec4 mixedState = mix(modelPosition, fullScreenState, uProgress);
-  mixedState.z += sin(modelPosition.x * 1.0) * 5. * uScrollY * mixedState.x;
+  modelPosition.z += sin(modelPosition.x * 0.2) * 2. * uScrollY * mixedState.x;
 
   vec4 viewPosition = viewMatrix * modelPosition;
   vec4 projectedPosition = projectionMatrix * viewPosition;
