@@ -79,9 +79,11 @@ const texturesToLoad = [
 // ----------------- GUI -----------------  //
 const settings = {
   progress: 0,
+  scale: 1,
 };
 const gui = new GUI();
-gui.add(settings, "progress", 0, 1, 0.001);
+gui.add(settings, "progress", -5, 1, 0.001);
+gui.add(settings, "scale", 0, 5, 0.001);
 
 /**
  * Setting up values
@@ -90,8 +92,10 @@ const sizes = {
   width: window.innerWidth,
   height: window.innerHeight,
 };
+
 const meshWidth = 2.3;
 const meshHeight = 2.3;
+
 const margin = 3.5;
 const n = 1;
 const wholeWidth = n * margin;
@@ -109,8 +113,6 @@ const canvas = document.querySelector("canvas.webgl");
 
 // Scene
 const scene = new THREE.Scene();
-
-// By wich value must I multiply  the meshWidth to make it fit the screen
 
 /**
  * Objects
@@ -141,12 +143,44 @@ window.addEventListener("resize", () => {
   camera.aspect = sizes.width / sizes.height;
   camera.updateProjectionMatrix();
 
+  // update ndcWidth and ndcHeight
+  if (camera) {
+    ndcWidth =
+      2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
+    ndcHeight =
+      2 *
+      camera.position.z *
+      Math.tan((camera.fov / 2) * (Math.PI / 180)) *
+      (sizes.height / sizes.width);
+  }
+
   // Update renderer
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 
-// Objects
+/**
+ * Camera
+ */
+// Base camera
+const camera = new THREE.PerspectiveCamera(
+  35,
+  sizes.width / sizes.height,
+  0.1,
+  100
+);
+
+camera.position.z = 6;
+
+let aspect = sizes.width / sizes.height;
+
+let ndcHeight =
+  2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
+let ndcWidth = ndcHeight * aspect;
+
+console.log(ndcWidth, ndcHeight);
+
+//  ============ Objects ============
 for (let i = 0; i < n; i++) {
   material[i] = new THREE.ShaderMaterial({
     uniforms: {
@@ -155,7 +189,7 @@ for (let i = 0; i < n; i++) {
       uProgress: { value: 0.0 },
       uDistanceFromCenter: { value: 0.0 },
       uResolution: {
-        value: new THREE.Vector2(sizes.width, sizes.height),
+        value: new THREE.Vector2(ndcWidth, ndcHeight),
       },
       uQuadSize: { value: new THREE.Vector2(meshWidth, meshHeight) },
       uTexture: { value: texture },
@@ -182,18 +216,6 @@ for (let i = 0; i < n; i++) {
 }
 
 /**
- * Camera
- */
-// Base camera
-const camera = new THREE.PerspectiveCamera(
-  35,
-  sizes.width / sizes.height,
-  0.1,
-  100
-);
-camera.position.z = 6;
-
-/**
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
@@ -206,7 +228,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 /**
  * Scroll
  */
-let scrollTarget = wholeWidth * margin * n * 2.5;
+let scrollTarget = wholeWidth * n * meshWidth;
 let scrollSpead = 0;
 let currentScroll = 0;
 let isInMotion = false;
@@ -234,7 +256,7 @@ window.addEventListener("click", () => {
     const { x } = currentIntersect.object.position;
     if (Math.abs(x) >= 0.05) {
       // if the user click on a plane on the left/right side -> centers it
-      scrollTarget = x * -1 * (wholeWidth - margin * 2.8);
+      scrollTarget = x * -1 * (wholeWidth - margin * 2);
     } else {
       // if the user click on a plane on the center -> open the project
     }
@@ -264,7 +286,7 @@ const updateMeshes = () => {
     o.rotation.z = o.position.x * -0.1;
 
     // ======== position Y in function of distance from center effect ========
-    o.position.y = 0.2;
+    // o.position.y = 0.2;
     o.position.y += Math.abs(o.position.x * 0.5) * -1;
     // o.position.y += Math.abs(Math.sin(o.position.x * 0.5)) * -1;
     o.position.y *= 0.5;
@@ -300,6 +322,7 @@ let previousTime = 0;
 
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
+
   previousTime = elapsedTime;
 
   scrollSpead += (scrollTarget - scrollSpead) * 0.8;
@@ -312,6 +335,9 @@ const tick = () => {
     material[i].uniforms.uScrollY.value = scrollTarget / sizes.height;
     material[i].uniforms.uProgress.value = settings.progress;
     material[i].uniforms.uTime.value = elapsedTime;
+
+    _.scale.x = settings.scale;
+    _.scale.y = settings.scale;
   });
 
   updateMeshes();
