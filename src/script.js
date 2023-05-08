@@ -2,18 +2,99 @@ import * as THREE from "three";
 import testVertexShader from "./shaders/picture/vertex.glsl";
 import testFragmentShader from "./shaders/picture/fragment.glsl";
 import gsap from "gsap";
+import { GUI } from "lil-gui";
+
+// ----------------- CONTENT -----------------  //
+const content = [
+  {
+    id: 1,
+    name: "Extension d’une maison sur le port",
+    location: "description",
+    image: "/textures/texture1.jpg",
+  },
+  {
+    id: 2,
+    name: "Titre 1",
+    location: "description",
+    image: "/textures/texture2.jpg",
+  },
+  {
+    id: 3,
+    name: "Titre 2",
+    location: "description",
+    image: "/textures/texture3.jpg",
+  },
+  {
+    id: 4,
+    name: "Titre 3",
+    location: "description",
+    image: "/textures/texture4.jpg",
+  },
+  {
+    id: 5,
+    name: "Titre 4",
+    location: "description",
+    image: "/textures/texture5.jpg",
+  },
+  {
+    id: 6,
+    name: "Titre 5",
+    location: "description",
+    image: "/textures/texture6.jpg",
+  },
+  {
+    id: 7,
+    name: "Titre 6",
+    location: "description",
+    image: "/textures/texture7.jpg",
+  },
+  {
+    id: 8,
+    name: "Titre 7",
+    location: "description",
+    image: "/textures/texture8.jpg",
+  },
+  {
+    id: 9,
+    name: "Titre 8",
+    location: "description",
+    image: "/textures/texture9.jpg",
+  },
+];
+
+const texturesToLoad = [
+  "/textures/texture1.jpg",
+  "/textures/texture2.jpg",
+  "/textures/texture3.jpg",
+  "/textures/texture4.jpg",
+  "/textures/texture5.jpg",
+  "/textures/texture6.jpg",
+  "/textures/texture7.jpg",
+  "/textures/texture8.jpg",
+  "/textures/texture9.jpg",
+];
 
 // ----------------- THREEJS PART -----------------  //
+
+// ----------------- GUI -----------------  //
+const settings = {
+  progress: 0,
+};
+const gui = new GUI();
+gui.add(settings, "progress", 0, 1, 0.001);
 
 /**
  * Setting up values
  */
+const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight,
+};
 const meshWidth = 2.3;
 const meshHeight = 2.3;
 const margin = 3.5;
-const n = 9;
+const n = 1;
 const wholeWidth = n * margin;
-
 const group = new THREE.Group();
 
 let currentPlane = 0;
@@ -29,81 +110,14 @@ const canvas = document.querySelector("canvas.webgl");
 // Scene
 const scene = new THREE.Scene();
 
+// By wich value must I multiply  the meshWidth to make it fit the screen
+
 /**
  * Objects
  */
 // Texture
 const textureLoader = new THREE.TextureLoader();
 const texture = textureLoader.load("/textures/texture1.jpg");
-
-const texturesToLoad = [
-  "/textures/texture1.jpg",
-  "/textures/texture2.jpg",
-  "/textures/texture3.jpg",
-  "/textures/texture4.jpg",
-  "/textures/texture5.jpg",
-  "/textures/texture6.jpg",
-  "/textures/texture7.jpg",
-  "/textures/texture8.jpg",
-  "/textures/texture9.jpg",
-];
-
-const content = [
-  {
-    id: 1,
-    name: "Extension d’une maison sur le port",
-    location: "description",
-    image: "/textures/texture1.jpg",
-  },
-  {
-    id: 2,
-    name: "Titre 1",
-    location: "description",
-    image: "/textures/texture2.jpg",
-  },
-  {
-    id: 2,
-    name: "Titre 2",
-    location: "description",
-    image: "/textures/texture3.jpg",
-  },
-  {
-    id: 3,
-    name: "Titre 3",
-    location: "description",
-    image: "/textures/texture4.jpg",
-  },
-  {
-    id: 4,
-    name: "Titre 4",
-    location: "description",
-    image: "/textures/texture5.jpg",
-  },
-  {
-    id: 5,
-    name: "Titre 5",
-    location: "description",
-    image: "/textures/texture6.jpg",
-  },
-  {
-    id: 6,
-    name: "Titre 6",
-    location: "description",
-    image: "/textures/texture7.jpg",
-  },
-  {
-    id: 7,
-    name: "Titre 7",
-    location: "description",
-    image: "/textures/texture8.jpg",
-  },
-  {
-    id: 8,
-    name: "Titre 8",
-    location: "description",
-    image: "/textures/texture9.jpg",
-  },
-];
 
 const texturePromises = texturesToLoad.map(
   (textureToLoad) =>
@@ -114,17 +128,41 @@ const texturePromises = texturesToLoad.map(
     })
 );
 
+/**
+ * Handling resize
+ */
+
+window.addEventListener("resize", () => {
+  // Update sizes
+  sizes.width = window.innerWidth;
+  sizes.height = window.innerHeight;
+
+  // Update camera
+  camera.aspect = sizes.width / sizes.height;
+  camera.updateProjectionMatrix();
+
+  // Update renderer
+  renderer.setSize(sizes.width, sizes.height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
+
 // Objects
 for (let i = 0; i < n; i++) {
   material[i] = new THREE.ShaderMaterial({
     uniforms: {
       uScrollY: { value: 0.0 },
       uTime: { value: 0.0 },
+      uProgress: { value: 0.0 },
       uDistanceFromCenter: { value: 0.0 },
+      uResolution: {
+        value: new THREE.Vector2(sizes.width, sizes.height),
+      },
+      uQuadSize: { value: new THREE.Vector2(meshWidth, meshHeight) },
       uTexture: { value: texture },
     },
     vertexShader: testVertexShader,
     fragmentShader: testFragmentShader,
+    // wireframe: true,
   });
 
   Promise.all(texturePromises).then((textures) => {
@@ -144,34 +182,8 @@ for (let i = 0; i < n; i++) {
 }
 
 /**
- * Sizes
- */
-const sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight,
-};
-
-window.addEventListener("resize", () => {
-  // Update sizes
-  sizes.width = window.innerWidth;
-  sizes.height = window.innerHeight;
-
-  // Update camera
-  camera.aspect = sizes.width / sizes.height;
-  camera.updateProjectionMatrix();
-
-  // Update renderer
-  renderer.setSize(sizes.width, sizes.height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-});
-
-/**
  * Camera
  */
-// Group
-const cameraGroup = new THREE.Group();
-scene.add(cameraGroup);
-
 // Base camera
 const camera = new THREE.PerspectiveCamera(
   35,
@@ -180,6 +192,7 @@ const camera = new THREE.PerspectiveCamera(
   100
 );
 camera.position.z = 6;
+
 /**
  * Renderer
  */
@@ -193,7 +206,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 /**
  * Scroll
  */
-let scrollTarget = 0;
+let scrollTarget = wholeWidth * margin * n * 2.5;
 let scrollSpead = 0;
 let currentScroll = 0;
 let isInMotion = false;
@@ -273,7 +286,6 @@ const updateMeshes = () => {
     const intersects = raycaster.intersectObjects(meshes);
 
     if (intersects.length) {
-      console.log(canvas.style.cursor);
       currentIntersect = intersects[0];
       document.body.style.cursor = "pointer";
     } else {
@@ -288,7 +300,6 @@ let previousTime = 0;
 
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
-  const deltaTime = elapsedTime - previousTime;
   previousTime = elapsedTime;
 
   scrollSpead += (scrollTarget - scrollSpead) * 0.8;
@@ -296,19 +307,14 @@ const tick = () => {
   scrollTarget *= 0.9;
   currentScroll = scrollSpead * 0.5;
 
+  // Update uniforms
   meshes.forEach((_, i) => {
     material[i].uniforms.uScrollY.value = scrollTarget / sizes.height;
+    material[i].uniforms.uProgress.value = settings.progress;
     material[i].uniforms.uTime.value = elapsedTime;
   });
 
   updateMeshes();
-
-  const parallaxX = 0;
-  const parallaxY = 0;
-  cameraGroup.position.x +=
-    (parallaxX - cameraGroup.position.x) * 5 * deltaTime;
-  cameraGroup.position.y +=
-    (parallaxY - cameraGroup.position.y) * 5 * deltaTime;
 
   // Render
   renderer.render(scene, camera);
