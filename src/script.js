@@ -82,7 +82,7 @@ const settings = {
   scale: 1,
 };
 const gui = new GUI();
-gui.add(settings, "progress", -5, 1, 0.001);
+gui.add(settings, "progress", 0, 1, 0.001);
 gui.add(settings, "scale", 0, 5, 0.001);
 
 /**
@@ -97,7 +97,7 @@ const meshWidth = 2.3;
 const meshHeight = 2.3;
 
 const margin = 3.5;
-const n = 1;
+const n = 8;
 const wholeWidth = n * margin;
 const group = new THREE.Group();
 
@@ -192,6 +192,7 @@ for (let i = 0; i < n; i++) {
         value: new THREE.Vector2(ndcWidth, ndcHeight),
       },
       uQuadSize: { value: new THREE.Vector2(meshWidth, meshHeight) },
+      uTextureSize: { value: new THREE.Vector2(0, 0) },
       uTexture: { value: texture },
     },
     vertexShader: testVertexShader,
@@ -201,13 +202,18 @@ for (let i = 0; i < n; i++) {
 
   Promise.all(texturePromises).then((textures) => {
     material[i].uniforms.uTexture.value = textures[i];
+
+    material[i].uniforms.uTextureSize.value = new THREE.Vector2(
+      textures[i].image.width,
+      textures[i].image.height
+    );
   });
 
   const mesh = new THREE.Mesh(
     new THREE.PlaneGeometry(meshWidth, meshHeight, 128, 128),
     material[i]
   );
-
+  mesh.position.y = 0.1;
   mesh.position.x = i * margin;
 
   meshes.push(mesh);
@@ -287,8 +293,8 @@ const updateMeshes = () => {
 
     // ======== position Y in function of distance from center effect ========
     // o.position.y = 0.2;
-    o.position.y += Math.abs(o.position.x * 0.5) * -1;
-    // o.position.y += Math.abs(Math.sin(o.position.x * 0.5)) * -1;
+    // o.position.y += Math.abs(o.position.x * 0.5) * -1;
+    o.position.y += Math.abs(Math.sin(o.position.x * 0.5)) * -1;
     o.position.y *= 0.5;
 
     // define the index of the currentPlane in the center
@@ -333,8 +339,15 @@ const tick = () => {
   // Update uniforms
   meshes.forEach((_, i) => {
     material[i].uniforms.uScrollY.value = scrollTarget / sizes.height;
-    material[i].uniforms.uProgress.value = settings.progress;
     material[i].uniforms.uTime.value = elapsedTime;
+
+    if (i === currentPlane) {
+      material[i].uniforms.uProgress.value = settings.progress;
+      _.position.z = 0.1;
+    } else {
+      _.position.y += settings.progress * -10;
+      // _.position.y = THREE.MathUtils.lerp(_.position.y, 5, 0.1);
+    }
 
     _.scale.x = settings.scale;
     _.scale.y = settings.scale;
