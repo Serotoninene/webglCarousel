@@ -186,6 +186,7 @@ for (let i = 0; i < n; i++) {
       uTime: { value: 0.0 },
       uProgress: { value: 0.0 },
       uDistanceFromCenter: { value: 0.0 },
+      uCorners: { value: new THREE.Vector4(0, 0, 0, 0) },
       uResolution: {
         value: new THREE.Vector2(ndcWidth, ndcHeight),
       },
@@ -218,6 +219,17 @@ for (let i = 0; i < n; i++) {
   group.add(mesh);
   scene.add(mesh);
 }
+const timelines = [];
+meshes.forEach((mesh, i) => {
+  const tl = gsap.timeline();
+  tl
+    .to(material[i].uniforms.uCorners.value, { x: 1 }, 0.2)
+    .to(material[i].uniforms.uCorners.value, { y: 1 }, 0.4)
+    .to(material[i].uniforms.uCorners.value, { z: 1 }, 0.6)
+    .to(material[i].uniforms.uCorners.value, { w: 1 }, 0.8),
+    0.8;
+  timelines.push(tl);
+});
 
 /**
  * Renderer
@@ -340,11 +352,11 @@ const tick = () => {
     material[i].uniforms.uTime.value = elapsedTime;
 
     if (i === currentPlane) {
+      timelines[i].progress(settings.progress);
       material[i].uniforms.uProgress.value = settings.progress;
       _.position.z = 0.1;
     } else {
       _.position.y += settings.progress * -10;
-      // _.position.y = THREE.MathUtils.lerp(_.position.y, 5, 0.1);
     }
 
     _.scale.x = settings.scale;
@@ -372,12 +384,17 @@ function handlingGSAP() {
 
   const array = [projectIndex, projectName, projectLocation];
 
+  // ============== SCALE ANIMATION ==============
+
+  // ============== WORDING ANIMATION ==============
+  // if the user is scrolling, hide the project description
   if (isInMotion) {
     gsap.to(array, {
       stagger: 0.1,
       opacity: 0,
     });
   } else {
+    // WHEN STOP SCROLLING, SHOW THE PROJECT DESCRIPTION with stagger and opacity back to 1
     // can you refactor the next 3 lines
     const index = content[currentPlane].id.toString().padStart(2, "0");
     const name = content[currentPlane].name;
