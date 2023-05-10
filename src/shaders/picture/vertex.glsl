@@ -10,6 +10,7 @@ varying vec2 vSize;
 void main()
 {
   vUv = uv;
+  vSize = mix(uQuadSize, uResolution, uProgress);
 
   vec4 modelPosition = modelMatrix * vec4(position, 1.0);
   vec4 fullScreenState = vec4(position, 1.0);
@@ -18,7 +19,6 @@ void main()
   modelPosition.z += sin(modelPosition.x * 1.0) * 5. * uScrollY;
   vec4 mixedState = mix(modelPosition, fullScreenState, uProgress);
 
-  vec2 vSize = mix(uQuadSize, uResolution, uProgress);
 
   vec4 viewPosition = viewMatrix * mixedState;
   vec4 projectedPosition = projectionMatrix * viewPosition;

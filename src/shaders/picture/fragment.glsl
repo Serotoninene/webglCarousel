@@ -19,7 +19,7 @@ vec2 getUV(vec2 uv, vec2 textureSize, vec2 quadSize){
     tempUV*= vec2(1., textureAspect / quadAspect);
   }
 
-  tempUV *= vec2(0.5);
+  // tempUV *= vec2(0.5);
 
   tempUV += vec2(0.5);
   return tempUV;
@@ -27,10 +27,7 @@ vec2 getUV(vec2 uv, vec2 textureSize, vec2 quadSize){
 
 void main()
 {
-  // vec2 newUV = (vUv - vec2(0.5)) * (2.0 - uProgress) + vec2(0.5);
-  vec2 newUV = (vUv - vec2(0.5)) * (2.0 - uProgress) + vec2(0.5);
-
-  vec2 correctUV = getUV(newUV, uTextureSize, uQuadSize);
+  vec2 correctUV = getUV(vUv, uTextureSize, vSize);
   vec4 color = texture2D(uTexture, correctUV);
   // gl_FragColor = vec4(uProgress ,0.0 ,0.0 , 1.0);
   gl_FragColor = vec4(color);

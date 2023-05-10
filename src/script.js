@@ -178,8 +178,6 @@ let ndcHeight =
   2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
 let ndcWidth = ndcHeight * aspect;
 
-console.log(ndcWidth, ndcHeight);
-
 //  ============ Objects ============
 for (let i = 0; i < n; i++) {
   material[i] = new THREE.ShaderMaterial({
