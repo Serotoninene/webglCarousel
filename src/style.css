@@ -11,7 +11,12 @@ body {
   font-weight: 400;
 }
 
+body {
+  transform: translate3d(0, 100%, 0);
+}
+
 .webgl {
+  z-index: 1;
   position: fixed;
   top: 0;
   left: 0;

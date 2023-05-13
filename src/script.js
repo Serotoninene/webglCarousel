@@ -63,9 +63,9 @@ const content = [
 ];
 
 const texturesToLoad = [
-  "/textures/texture1.jpg",
-  "/textures/texture2.jpg",
   "/textures/texture3.jpg",
+  "/textures/texture2.jpg",
+  "/textures/texture1.jpg",
   "/textures/texture4.jpg",
   "/textures/texture5.jpg",
   "/textures/texture6.jpg",
@@ -78,12 +78,14 @@ const texturesToLoad = [
 
 // ----------------- GUI -----------------  //
 const settings = {
-  progress: 0,
+  lerpY: 0.324,
+  progress: 1,
   scale: 1,
+  snapDelta: 0.717,
 };
 const gui = new GUI();
-gui.add(settings, "progress", 0, 1, 0.001);
-gui.add(settings, "scale", 0, 5, 0.001);
+gui.add(settings, "lerpY", 0, 1, 0.001);
+gui.add(settings, "snapDelta", 0, 1, 0.001);
 
 /**
  * Setting up values
@@ -244,7 +246,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 /**
  * Scroll
  */
-let scrollTarget = wholeWidth * n * meshWidth;
+let scrollTarget = 0;
 let scrollSpead = 0;
 let currentScroll = 0;
 let isInMotion = false;
@@ -275,11 +277,20 @@ window.addEventListener("click", () => {
       scrollTarget = x * -1 * (wholeWidth - margin * 2);
     } else {
       // if the user click on a plane on the center -> open the project
-      gsap.to(settings, {
-        progress: 1,
-        duration: 0.8,
-        ease: Power3.easeInOut,
-      });
+      if (settings.progress === 0) {
+        // if the user click on a plane on the center -> open the project
+        gsap.to(settings, {
+          progress: 1,
+          duration: 0.8,
+          ease: Power3.easeInOut,
+        });
+      } else {
+        gsap.to(settings, {
+          progress: 0,
+          duration: 0.8,
+          ease: Power3.easeInOut,
+        });
+      }
     }
   }
 });
@@ -301,15 +312,21 @@ const updateMeshes = () => {
     // ======== snapping effect ========
     let rounded = Math.round(o.position.x / margin) * margin;
     let diff = rounded - o.position.x;
-    o.position.x += Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.04;
+    o.position.x += THREE.MathUtils.lerp(
+      0,
+      Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.04,
+      settings.snapDelta
+    );
 
     // ======== rotation effect ========
     o.rotation.z = o.position.x * -0.1;
 
     // ======== position Y in function of distance from center effect ========
-    // o.position.y = 0.2;
-    // o.position.y += Math.abs(o.position.x * 0.5) * -1;
-    o.position.y += Math.abs(Math.sin(o.position.x * 0.5)) * -1;
+    o.position.y += THREE.MathUtils.lerp(
+      o.position.y,
+      Math.abs(Math.sin(o.position.x * 0.5)) * -1,
+      settings.lerpY
+    );
     o.position.y *= 0.5;
 
     // define the index of the currentPlane in the center
@@ -380,6 +397,11 @@ const tick = () => {
 tick();
 
 // ----------------- GSAP PART -----------------  //
+
+// ============== INTRO ANIMATION ==============
+const introTl = gsap.timeline();
+introTl.to(".body", { y: 0, duration: 1, ease: Power3.easeInOut }, 1);
+introTl.to(settings, { progress: 0, duration: 1, ease: Power3.easeInOut });
 
 // when isInMotion === true, project description
 function handlingGSAP() {
