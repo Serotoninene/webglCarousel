@@ -19,6 +19,7 @@ void main()
 
   vec4 modelPosition = modelMatrix * vec4(position, 1.0);
   vec4 fullScreenState = vec4(position, 1.0);
+  fullScreenState.x -= .5;
   fullScreenState.x *=  uResolution.x / uQuadSize.x;
   fullScreenState.y *=  uResolution.y / uQuadSize.y;
   modelPosition.z += sin(modelPosition.x * 1.0) * 5. * uScrollY;

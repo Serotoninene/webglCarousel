@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import testVertexShader from "./shaders/picture/vertex.glsl";
 import testFragmentShader from "./shaders/picture/fragment.glsl";
-import gsap from "gsap";
+import gsap, { Power3 } from "gsap";
 import { GUI } from "lil-gui";
 
 // ----------------- CONTENT -----------------  //
@@ -275,6 +275,11 @@ window.addEventListener("click", () => {
       scrollTarget = x * -1 * (wholeWidth - margin * 2);
     } else {
       // if the user click on a plane on the center -> open the project
+      gsap.to(settings, {
+        progress: 1,
+        duration: 0.8,
+        ease: Power3.easeInOut,
+      });
     }
   }
 });
