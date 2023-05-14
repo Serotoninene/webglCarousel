@@ -13,9 +13,30 @@ float PI = 3.141592653589793238;
 void main()
 {
   vUv = uv;
+  vec3 newPosition = position;
   float sine = sin(PI * uProgress);
   float waves = sine * 0.1 * sin(5. * length(uv) + 5. * uProgress);
   vSize = mix(uQuadSize, uResolution, uProgress);
+
+//  // Calculate the distance from the vertex to the center
+//   vec2 center = vec2(0.0, 0.0);
+//   float distance = length(position.xy - center);
+
+//   // Determine the radius for the rounded corners
+//   float cornerRadius = 0.5 * 2.4; // Adjust as needed
+
+  //  // Round all the corners except the top left corner
+  // if (position.x > 0.0) {
+  //   if (position.y > 0.0) {
+  //     // Top right corner
+  //     newPosition.x = max(position.x, cornerRadius);
+  //     newPosition.y = max(position.y, cornerRadius);
+  //   } else {
+  //     // Bottom right corner
+  //     newPosition.x = max(position.x, cornerRadius);
+  //     newPosition.y = min(position.y, -cornerRadius);
+  //   }
+  // }
 
   vec4 modelPosition = modelMatrix * vec4(position, 1.0);
   vec4 fullScreenState = vec4(position, 1.0);

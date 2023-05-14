@@ -1,9 +1,13 @@
 import * as THREE from "three";
 import testVertexShader from "./shaders/picture/vertex.glsl";
 import testFragmentShader from "./shaders/picture/fragment.glsl";
-import gsap, { Power3 } from "gsap";
+import gsap, { Power1, Power2, Power3, Power4 } from "gsap";
 import { GUI } from "lil-gui";
+import Stats from "stats-js";
 
+var stats = new Stats();
+stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild(stats.dom);
 // ----------------- CONTENT -----------------  //
 const content = [
   {
@@ -90,16 +94,17 @@ gui.add(settings, "snapDelta", 0, 1, 0.001);
 /**
  * Setting up values
  */
-const sizes = {
+let sizes = {
   width: window.innerWidth,
   height: window.innerHeight,
 };
-
-const meshWidth = 2.3;
-const meshHeight = 2.3;
+let ndcWidth;
+let ndcHeight;
+const meshWidth = 2.4;
+const meshHeight = meshWidth;
 
 const margin = 3.5;
-const n = 8;
+const n = 3;
 const wholeWidth = n * margin;
 const group = new THREE.Group();
 
@@ -146,15 +151,14 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
 
   // update ndcWidth and ndcHeight
-  if (camera) {
-    ndcWidth =
-      2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-    ndcHeight =
-      2 *
-      camera.position.z *
-      Math.tan((camera.fov / 2) * (Math.PI / 180)) *
-      (sizes.height / sizes.width);
-  }
+
+  ndcWidth =
+    2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
+  ndcHeight =
+    2 *
+    camera.position.z *
+    Math.tan((camera.fov / 2) * (Math.PI / 180)) *
+    (sizes.height / sizes.width);
 
   // Update renderer
   renderer.setSize(sizes.width, sizes.height);
@@ -176,9 +180,9 @@ camera.position.z = 6;
 
 let aspect = sizes.width / sizes.height;
 
-let ndcHeight =
+ndcHeight =
   2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-let ndcWidth = ndcHeight * aspect;
+ndcWidth = ndcHeight * aspect;
 
 //  ============ Objects ============
 for (let i = 0; i < n; i++) {
@@ -211,7 +215,7 @@ for (let i = 0; i < n; i++) {
   });
 
   const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(meshWidth, meshHeight, 128, 128),
+    new THREE.PlaneGeometry(meshWidth, meshHeight, 256, 256),
     material[i]
   );
   mesh.position.y = 0.1;
@@ -224,12 +228,7 @@ for (let i = 0; i < n; i++) {
 const timelines = [];
 meshes.forEach((mesh, i) => {
   const tl = gsap.timeline();
-  tl
-    .to(material[i].uniforms.uCorners.value, { x: 1 }, 0.2)
-    .to(material[i].uniforms.uCorners.value, { y: 1 }, 0.4)
-    .to(material[i].uniforms.uCorners.value, { z: 1 }, 0.6)
-    .to(material[i].uniforms.uCorners.value, { w: 1 }, 0.8),
-    0.8;
+
   timelines.push(tl);
 });
 
@@ -266,6 +265,8 @@ window.addEventListener("mousemove", (event) => {
   mouse.y = -(event.clientY / sizes.height) * 2 + 1;
 });
 
+let clickedPanePosition = 0;
+
 /**
  * Mouse click
  */
@@ -274,7 +275,10 @@ window.addEventListener("click", () => {
     const { x } = currentIntersect.object.position;
     if (Math.abs(x) >= 0.05) {
       // if the user click on a plane on the left/right side -> centers it
-      scrollTarget = x * -1 * (wholeWidth - margin * 2);
+      // scrollTarget = x * -1 * (wholeWidth - margin * 2);
+      // scrollTarget += -x * (wholeWidth - margin * 2);
+      scrollTarget = -x * ((n - 1) / 2) * margin * 2 * 2 * 2;
+      // scrollTarget *= 0.5;
     } else {
       // if the user click on a plane on the center -> open the project
       if (settings.progress === 0) {
@@ -359,11 +363,12 @@ const updateMeshes = () => {
 let previousTime = 0;
 
 const tick = () => {
+  stats.begin();
   const elapsedTime = clock.getElapsedTime();
 
   previousTime = elapsedTime;
 
-  scrollSpead += (scrollTarget - scrollSpead) * 0.8;
+  scrollSpead += (scrollTarget - scrollSpead) * 0.5;
   scrollSpead *= 0.9;
   scrollTarget *= 0.9;
   currentScroll = scrollSpead * 0.5;
@@ -389,6 +394,7 @@ const tick = () => {
 
   // Render
   renderer.render(scene, camera);
+  stats.end();
 
   // Call tick again on the next frame
   window.requestAnimationFrame(tick);
@@ -400,7 +406,7 @@ tick();
 
 // ============== INTRO ANIMATION ==============
 const introTl = gsap.timeline();
-introTl.to(".body", { y: 0, duration: 1, ease: Power3.easeInOut }, 1);
+introTl.to(".body", { y: 0, duration: 0.8, ease: Power2.easeInOut }, 1);
 introTl.to(settings, { progress: 0, duration: 1, ease: Power3.easeInOut });
 
 // when isInMotion === true, project description
