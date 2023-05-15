@@ -265,8 +265,6 @@ window.addEventListener("mousemove", (event) => {
   mouse.y = -(event.clientY / sizes.height) * 2 + 1;
 });
 
-let clickedPanePosition = 0;
-
 /**
  * Mouse click
  */
@@ -274,9 +272,11 @@ window.addEventListener("click", () => {
   if (currentIntersect) {
     const { x } = currentIntersect.object.position;
     if (Math.abs(x) >= 0.05) {
+      ndcWidth =
+        2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
       // if the user click on a plane on the left/right side -> centers it
       scrollTarget = x * (ndcWidth - margin * 2) * 10;
-      // scrollTarget *= 2;
+      scrollTarget *= 0.8;
     } else {
       // if the user click on a plane on the center -> open the project
       if (settings.progress === 0) {
