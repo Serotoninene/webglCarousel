@@ -275,10 +275,8 @@ window.addEventListener("click", () => {
     const { x } = currentIntersect.object.position;
     if (Math.abs(x) >= 0.05) {
       // if the user click on a plane on the left/right side -> centers it
-      // scrollTarget = x * -1 * (wholeWidth - margin * 2);
-      // scrollTarget += -x * (wholeWidth - margin * 2);
-      scrollTarget = -x * ((n - 1) / 2) * margin * 2 * 2 * 2;
-      // scrollTarget *= 0.5;
+      scrollTarget = x * (ndcWidth - margin * 2) * 10;
+      // scrollTarget *= 2;
     } else {
       // if the user click on a plane on the center -> open the project
       if (settings.progress === 0) {
@@ -308,9 +306,9 @@ let currentIntersect = null;
 const updateMeshes = () => {
   meshes.forEach((o, i) => {
     o.position.x += currentScroll * 0.01;
-    // If the mesh goes out of bounds on the left side, move it to the right
+    // // If the mesh goes out of bounds on the left side, move it to the right
     if (o.position.x < -wholeWidth / 2) o.position.x += wholeWidth;
-    // If the mesh goes out of bounds on the right side, move it to the left
+    // // If the mesh goes out of bounds on the right side, move it to the left
     if (o.position.x > wholeWidth / 2) o.position.x -= wholeWidth;
 
     // ======== snapping effect ========
@@ -385,9 +383,6 @@ const tick = () => {
     } else {
       _.position.y += settings.progress * -10;
     }
-
-    _.scale.x = settings.scale;
-    _.scale.y = settings.scale;
   });
 
   updateMeshes();
