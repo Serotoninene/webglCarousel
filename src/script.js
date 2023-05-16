@@ -81,17 +81,16 @@ const texturesToLoad = [
 // ----------------- THREEJS PART -----------------  //
 
 // ----------------- GUI -----------------  //
-const settings = {
+let settings = {
   lerpY: 0.324,
   progress: 0,
   scale: 1,
   snapDelta: 0.717,
-  uValue: 0.5,
+  uValue: [],
 };
 const gui = new GUI();
 gui.add(settings, "lerpY", 0, 1, 0.001);
 gui.add(settings, "snapDelta", 0, 1, 0.001);
-gui.add(settings, "uValue", -1, 1, 0.001);
 
 /**
  * Setting up values
@@ -188,6 +187,8 @@ ndcWidth = ndcHeight * aspect;
 
 //  ============ Objects ============
 for (let i = 0; i < n; i++) {
+  settings.uValue.push({ value: 0 });
+
   material[i] = new THREE.ShaderMaterial({
     uniforms: {
       uScrollY: { value: 0.0 },
@@ -201,7 +202,7 @@ for (let i = 0; i < n; i++) {
       uQuadSize: { value: new THREE.Vector2(meshWidth, meshHeight) },
       uTextureSize: { value: new THREE.Vector2(0, 0) },
       uTexture: { value: texture },
-      uValue: { value: 0.0 },
+      uValue: { value: settings.uValue[i].value },
     },
     vertexShader: testVertexShader,
     fragmentShader: testFragmentShader,
@@ -282,20 +283,20 @@ window.addEventListener("click", () => {
       scrollTarget *= 0.8;
     } else {
       // if the user click on a plane on the center -> open the project
-      // if (settings.progress === 0) {
-      //   // if the user click on a plane on the center -> open the project
-      //   gsap.to(settings, {
-      //     progress: 1,
-      //     duration: 0.8,
-      //     ease: Power3.easeInOut,
-      //   });
-      // } else {
-      //   gsap.to(settings, {
-      //     progress: 0,
-      //     duration: 0.8,
-      //     ease: Power3.easeInOut,
-      //   });
-      // }
+      if (settings.progress === 0) {
+        // if the user click on a plane on the center -> open the project
+        gsap.to(settings, {
+          progress: 1,
+          duration: 0.8,
+          ease: Power3.easeInOut,
+        });
+      } else {
+        gsap.to(settings, {
+          progress: 0,
+          duration: 0.8,
+          ease: Power3.easeInOut,
+        });
+      }
     }
   }
 });
@@ -353,8 +354,22 @@ const updateMeshes = () => {
     if (intersects.length) {
       currentIntersect = intersects[0];
       document.body.style.cursor = "pointer";
+
+      currentIntersect.object.material.uniforms.uValue.value =
+        settings.uValue[currentPlane].value;
+
+      gsap.to(settings.uValue[currentPlane], {
+        value: 1,
+      });
     } else {
       document.body.style.cursor = "auto";
+      currentIntersect.object.material.uniforms.uValue.value =
+        settings.uValue[currentPlane].value;
+      for (let i = 0; i < n; i++) {
+        gsap.to(settings.uValue[i], {
+          value: 0,
+        });
+      }
     }
   });
 
@@ -378,7 +393,6 @@ const tick = () => {
   meshes.forEach((_, i) => {
     material[i].uniforms.uScrollY.value = scrollTarget / sizes.height;
     material[i].uniforms.uTime.value = elapsedTime;
-    material[i].uniforms.uValue.value = settings.uValue;
 
     if (i === currentPlane) {
       timelines[i].progress(settings.progress);
