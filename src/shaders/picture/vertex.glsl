@@ -10,6 +10,12 @@ varying vec2 vSize;
 
 float PI = 3.141592653589793238;
 
+// make a circleShape function that takes a radius and returns a float
+float circleShape(float radius, vec2 position) {
+  float value = distance(position, vec2(0.5));
+  return step(radius,value);
+}
+
 void main()
 {
   vUv = uv;
@@ -18,27 +24,41 @@ void main()
   float waves = sine * 0.1 * sin(5. * length(uv) + 5. * uProgress);
   vSize = mix(uQuadSize, uResolution, uProgress);
 
-//  // Calculate the distance from the vertex to the center
-//   vec2 center = vec2(0.0, 0.0);
-//   float distance = length(position.xy - center);
+ // Calculate the distance from the vertex to the center
+  vec2 center = vec2(0.0, 0.0);
+  float distance = length(position.xy - center);
 
-//   // Determine the radius for the rounded corners
-//   float cornerRadius = 0.5 * 2.4; // Adjust as needed
+  // Determine the radius for the rounded corners
+  float cornerRadius = 0.5 * 2.4; // Radius in pixels
+  float circle = circleShape(distance, position.xy);
 
-  //  // Round all the corners except the top left corner
-  // if (position.x > 0.0) {
-  //   if (position.y > 0.0) {
-  //     // Top right corner
-  //     newPosition.x = max(position.x, cornerRadius);
-  //     newPosition.y = max(position.y, cornerRadius);
-  //   } else {
-  //     // Bottom right corner
-  //     newPosition.x = max(position.x, cornerRadius);
-  //     newPosition.y = min(position.y, -cornerRadius);
-  //   }
-  // }
+  // newPosition = vec3(circle);
 
-  vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+  // Determine the masking factor for the corners
+  // float t = smoothstep(0., 1., newPosition.y);
+  // newPosition.xy = mix(newPosition.xy, vec2(0.0), t);
+
+  // // =================== ROUNDED SHAPE ===================
+  // newPosition.xy = mix(position.xy, normalize(position.xy + vec2(0.00001)) * cornerRadius, smoothstep(cornerRadius, cornerRadius, distance));
+  // // make the bottom-right corner not round (because we want to put the logo there)
+  // newPosition.xy = mix(newPosition.xy, position.xy, step(0.0, position.x) * step(position.y, 0.0));
+
+  // =================== HOUSE SHAPE ===================
+  if (position.y > 0.0 && abs(position.y) > uQuadSize.x/2. - abs(position.x) || position.y > 0.0 && position.y < -uQuadSize.x/2. - position.x) {
+    newPosition.xy = vec2(0.0, 0.0);
+  } 
+
+
+
+
+
+
+
+
+
+  
+
+  vec4 modelPosition = modelMatrix * vec4(newPosition, 1.0);
   vec4 fullScreenState = vec4(position, 1.0);
   // fullScreenState.x -= .5;
   fullScreenState.x *=  uResolution.x / uQuadSize.x;
