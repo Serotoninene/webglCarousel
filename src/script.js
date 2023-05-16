@@ -83,7 +83,7 @@ const texturesToLoad = [
 // ----------------- GUI -----------------  //
 let settings = {
   lerpY: 0.324,
-  progress: 0,
+  progress: 1,
   scale: 1,
   snapDelta: 0.717,
   uValue: [],
@@ -219,7 +219,7 @@ for (let i = 0; i < n; i++) {
   });
 
   const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(meshWidth, meshHeight, 64, 64),
+    new THREE.PlaneGeometry(meshWidth, meshHeight, 16, 16),
     material[i]
   );
   mesh.position.y = 0.1;
