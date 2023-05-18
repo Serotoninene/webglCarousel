@@ -1,5 +1,4 @@
 precision highp float;
-uniform float uProgress;
 uniform vec2 uTextureSize;
 uniform sampler2D uTexture;
 uniform vec2 uQuadSize;
@@ -27,6 +26,5 @@ void main()
 {
   vec2 correctUV = getUV(vUv, uTextureSize, vSize);
   vec4 color = texture2D(uTexture, correctUV);
-  // gl_FragColor = vec4(uProgress ,0.0 ,0.0 , 1.0);
   gl_FragColor = vec4(color);
 }

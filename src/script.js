@@ -8,6 +8,10 @@ import Stats from "stats-js";
 const stats = new Stats();
 stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom);
+
+//  OK J'AI UNE IDÉE DE GÉNIE, JE LAISSE LE VERTEX COMME IL EST
+// ET LA SEULE CHOSE QU'ON BOUGE C'EST LE CANVAS,
+// LE PROBLÈME C'EST QU'IL FAUT QUE J'AJUSTE LE BAIL NON PLUS EN FONCTION DE LA TAILLE DE L'ÉCRAN MAIS DU CANVAS
 // ----------------- CONTENT -----------------  //
 const content = [
   {
@@ -93,6 +97,12 @@ gui.add(settings, "lerpY", 0, 1, 0.001);
 gui.add(settings, "snapDelta", 0, 1, 0.001);
 
 /**
+ * Base
+ */
+// Canvas
+const canvas = document.querySelector("canvas.webgl");
+
+/**
  * Setting up values
  */
 let sizes = {
@@ -101,7 +111,15 @@ let sizes = {
 };
 let ndcWidth;
 let ndcHeight;
-const initialWidth = sizes.width;
+
+const canvasSizes = {
+  width: canvas.clientWidth,
+  height: canvas.clientHeight,
+};
+
+console.log(sizes);
+
+console.log(canvas.clientWidth);
 const meshWidth = 2.4;
 const meshHeight = meshWidth;
 
@@ -113,12 +131,6 @@ const group = new THREE.Group();
 let currentPlane = 0;
 let meshes = [];
 let material = [];
-
-/**
- * Base
- */
-// Canvas
-const canvas = document.querySelector("canvas.webgl");
 
 // Scene
 const scene = new THREE.Scene();
@@ -164,7 +176,7 @@ window.addEventListener("resize", () => {
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
-
+console.log(canvas.clientHeight);
 /**
  * Camera
  */
@@ -248,7 +260,7 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
+console.log(canvas.clientHeight);
 /**
  * Scroll
  */
