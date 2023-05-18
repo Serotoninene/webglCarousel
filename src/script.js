@@ -101,6 +101,7 @@ let sizes = {
 };
 let ndcWidth;
 let ndcHeight;
+const initialWidth = sizes.width;
 const meshWidth = 2.4;
 const meshHeight = meshWidth;
 
@@ -137,7 +138,6 @@ const texturePromises = texturesToLoad.map(
       });
     })
 );
-
 /**
  * Handling resize
  */
@@ -152,15 +152,14 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
 
   // update ndcWidth and ndcHeight
-
-  ndcWidth =
-    2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
   ndcHeight =
-    2 *
-    camera.position.z *
-    Math.tan((camera.fov / 2) * (Math.PI / 180)) *
-    (sizes.height / sizes.width);
+    2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
+  ndcWidth = sizes.width * r;
 
+  meshes[0].material.uniforms.uResolution.value = new THREE.Vector2(
+    ndcWidth,
+    ndcHeight
+  );
   // Update renderer
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -185,6 +184,10 @@ ndcHeight =
   2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
 ndcWidth = ndcHeight * aspect;
 
+const r = ndcWidth / sizes.width;
+
+let uResolution = new THREE.Vector2(ndcWidth, ndcHeight);
+
 //  ============ Objects ============
 for (let i = 0; i < n; i++) {
   settings.uValue.push({ value: 0 });
@@ -197,7 +200,7 @@ for (let i = 0; i < n; i++) {
       uDistanceFromCenter: { value: 0.0 },
       uCorners: { value: new THREE.Vector4(0, 0, 0, 0) },
       uResolution: {
-        value: new THREE.Vector2(ndcWidth, ndcHeight),
+        value: uResolution,
       },
       uQuadSize: { value: new THREE.Vector2(meshWidth, meshHeight) },
       uTextureSize: { value: new THREE.Vector2(0, 0) },
@@ -308,6 +311,7 @@ const clock = new THREE.Clock();
 let currentIntersect = null;
 
 const updateMeshes = () => {
+  // console.log(meshes[0].material.uniforms.uResolution.value);
   meshes.forEach((o, i) => {
     o.position.x += currentScroll * 0.01;
     // // If the mesh goes out of bounds on the left side, move it to the right
@@ -368,6 +372,7 @@ const updateMeshes = () => {
       for (let i = 0; i < n; i++) {
         gsap.to(settings.uValue[i], {
           value: 0,
+          duration: 0.4,
         });
       }
     }
