@@ -85,6 +85,7 @@ const texturesToLoad = [
 let settings = {
   lerpY: 0.324,
   progress: 1,
+  meshWidth: 2.4,
   scale: 1,
   snapDelta: 0.717,
   uValue: [],
@@ -92,6 +93,7 @@ let settings = {
 const gui = new GUI();
 gui.add(settings, "lerpY", 0, 1, 0.001);
 gui.add(settings, "snapDelta", 0, 1, 0.001);
+gui.add(settings, "meshWidth", 0, 5, 0.1);
 
 /**
  * Base
@@ -114,7 +116,7 @@ const canvasSizes = {
   height: canvas.clientHeight,
 };
 
-const meshWidth = 2.4;
+const meshWidth = settings.meshWidth;
 const meshHeight = meshWidth;
 
 const margin = 3.5;
@@ -168,9 +170,12 @@ window.addEventListener("resize", () => {
     2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
   ndcWidth = canvasSizes.width * r;
 
-  meshes[0].material.uniforms.uResolution.value = new THREE.Vector2(
-    ndcWidth,
-    ndcHeight
+  meshes.forEach(
+    (mesh) =>
+      (mesh.material.uniforms.uResolution.value = new THREE.Vector2(
+        ndcWidth,
+        ndcHeight
+      ))
   );
   // Update renderer
   renderer.setSize(canvasSizes.width, canvasSizes.height);
@@ -323,8 +328,8 @@ const clock = new THREE.Clock();
 let currentIntersect = null;
 
 const updateMeshes = () => {
-  // console.log(meshes[0].material.uniforms.uResolution.value);
   meshes.forEach((o, i) => {
+    // ======== scroll effect ========
     o.position.x += currentScroll * 0.01;
     // // If the mesh goes out of bounds on the left side, move it to the right
     if (o.position.x < -wholeWidth / 2) o.position.x += wholeWidth;
