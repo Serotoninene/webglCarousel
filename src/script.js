@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import testVertexShader from "./shaders/picture/vertex.glsl";
 import testFragmentShader from "./shaders/picture/fragment.glsl";
-import gsap, { Power1, Power2, Power3, Power4 } from "gsap";
+import gsap, { Power2, Power3 } from "gsap";
 import { GUI } from "lil-gui";
 import Stats from "stats-js";
 
@@ -117,9 +117,6 @@ const canvasSizes = {
   height: canvas.clientHeight,
 };
 
-console.log(sizes);
-
-console.log(canvas.clientWidth);
 const meshWidth = 2.4;
 const meshHeight = meshWidth;
 
@@ -155,48 +152,54 @@ const texturePromises = texturesToLoad.map(
  */
 
 window.addEventListener("resize", () => {
+  const widthRatio = canvasSizes.width / sizes.width;
+  const heightRatio = canvasSizes.height / sizes.height;
+
   // Update sizes
   sizes.width = window.innerWidth;
   sizes.height = window.innerHeight;
 
+  canvasSizes.width = sizes.width * widthRatio;
+  canvasSizes.height = sizes.height * heightRatio;
+
   // Update camera
-  camera.aspect = sizes.width / sizes.height;
+  camera.aspect = canvasSizes.width / canvasSizes.height;
   camera.updateProjectionMatrix();
 
   // update ndcWidth and ndcHeight
   ndcHeight =
     2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-  ndcWidth = sizes.width * r;
+  ndcWidth = canvasSizes.width * r;
 
   meshes[0].material.uniforms.uResolution.value = new THREE.Vector2(
     ndcWidth,
     ndcHeight
   );
   // Update renderer
-  renderer.setSize(sizes.width, sizes.height);
+  renderer.setSize(canvasSizes.width, canvasSizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
-console.log(canvas.clientHeight);
+
 /**
  * Camera
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(
   35,
-  sizes.width / sizes.height,
+  canvasSizes.width / canvasSizes.height,
   0.1,
   100
 );
 
 camera.position.z = 6;
 
-let aspect = sizes.width / sizes.height;
+let aspect = canvasSizes.width / canvasSizes.height;
 
 ndcHeight =
   2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
 ndcWidth = ndcHeight * aspect;
 
-const r = ndcWidth / sizes.width;
+const r = ndcWidth / canvasSizes.width;
 
 let uResolution = new THREE.Vector2(ndcWidth, ndcHeight);
 
@@ -258,7 +261,7 @@ const renderer = new THREE.WebGLRenderer({
   canvas: canvas,
   alpha: true,
 });
-renderer.setSize(sizes.width, sizes.height);
+renderer.setSize(canvasSizes.width, canvasSizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 console.log(canvas.clientHeight);
 /**
@@ -280,8 +283,8 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 window.addEventListener("mousemove", (event) => {
-  mouse.x = (event.clientX / sizes.width) * 2 - 1;
-  mouse.y = -(event.clientY / sizes.height) * 2 + 1;
+  mouse.x = (event.clientX / canvasSizes.width) * 2 - 1;
+  mouse.y = -(event.clientY / canvasSizes.height) * 2 + 1;
 });
 
 /**
@@ -408,7 +411,7 @@ const tick = () => {
 
   // Update uniforms
   meshes.forEach((_, i) => {
-    material[i].uniforms.uScrollY.value = scrollTarget / sizes.height;
+    material[i].uniforms.uScrollY.value = scrollTarget / canvasSizes.height;
     material[i].uniforms.uTime.value = elapsedTime;
 
     if (i === currentPlane) {
