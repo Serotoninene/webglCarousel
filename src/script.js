@@ -274,8 +274,27 @@ let scrollSpead = 0;
 let currentScroll = 0;
 let isInMotion = false;
 
+// ============ Scroll ============
 window.addEventListener("mousewheel", (e) => {
   scrollTarget = e.wheelDeltaY * 0.3;
+});
+
+// ============ Touch ============
+let touchStart = 0;
+let touchEnd = 0;
+
+window.addEventListener("touchstart", (e) => {
+  touchStart = e.touches[0].clientX;
+});
+
+window.addEventListener("touchmove", (e) => {
+  touchEnd = e.touches[0].clientX;
+  scrollTarget = (touchEnd - touchStart) * 0.2;
+});
+
+window.addEventListener("touchend", (e) => {
+  touchStart = 0;
+  touchEnd = 0;
 });
 
 /**
