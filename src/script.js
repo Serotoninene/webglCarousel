@@ -9,9 +9,6 @@ const stats = new Stats();
 stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom);
 
-//  OK J'AI UNE IDÉE DE GÉNIE, JE LAISSE LE VERTEX COMME IL EST
-// ET LA SEULE CHOSE QU'ON BOUGE C'EST LE CANVAS,
-// LE PROBLÈME C'EST QU'IL FAUT QUE J'AJUSTE LE BAIL NON PLUS EN FONCTION DE LA TAILLE DE L'ÉCRAN MAIS DU CANVAS
 // ----------------- CONTENT -----------------  //
 const content = [
   {
