@@ -85,9 +85,8 @@ const texturesToLoad = [
 let settings = {
   lerpY: 0.324,
   progress: 1,
-  meshWidth: 2.4,
-  meshHeight: 2.4,
-  scale: 1,
+  meshWidth: 1.7,
+  meshHeight: 2.5,
   snapDelta: 0.717,
   uValue: [],
 };
@@ -119,12 +118,13 @@ const canvasSizes = {
   height: canvas.clientHeight,
 };
 
-const meshWidth = settings.meshWidth;
-const meshHeight = settings.meshHeight;
+let meshWidth;
+let meshHeight;
 
-const margin = 3.5;
+let margin = 3.5;
+
 const n = 8;
-const wholeWidth = n * margin;
+let wholeWidth = n * margin;
 const group = new THREE.Group();
 
 let currentPlane = 0;
@@ -313,32 +313,32 @@ window.addEventListener("mousemove", (event) => {
  * Mouse click
  */
 window.addEventListener("click", () => {
-  if (currentIntersect) {
-    const { x } = currentIntersect.object.position;
-    if (Math.abs(x) >= 0.05) {
-      ndcWidth =
-        2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-      // if the user click on a plane on the left/right side -> centers it
-      scrollTarget = x * (ndcWidth - margin * 2) * 10;
-      scrollTarget *= 0.8;
-    } else {
-      // if the user click on a plane on the center -> open the project
-      if (settings.progress === 0) {
-        // if the user click on a plane on the center -> open the project
-        gsap.to(settings, {
-          progress: 1,
-          duration: 0.8,
-          ease: Power3.easeInOut,
-        });
-      } else {
-        gsap.to(settings, {
-          progress: 0,
-          duration: 0.8,
-          ease: Power3.easeInOut,
-        });
-      }
-    }
-  }
+  // if (currentIntersect) {
+  //   const { x } = currentIntersect.object.position;
+  //   if (Math.abs(x) >= 0.05) {
+  //     ndcWidth =
+  //       2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
+  //     // if the user click on a plane on the left/right side -> centers it
+  //     scrollTarget = x * (ndcWidth - margin * 2) * 10;
+  //     scrollTarget *= 0.8;
+  //   } else {
+  //     // if the user click on a plane on the center -> open the project
+  //     if (settings.progress === 0) {
+  //       // if the user click on a plane on the center -> open the project
+  //       gsap.to(settings, {
+  //         progress: 1,
+  //         duration: 0.8,
+  //         ease: Power3.easeInOut,
+  //       });
+  //     } else {
+  //       gsap.to(settings, {
+  //         progress: 0,
+  //         duration: 0.8,
+  //         ease: Power3.easeInOut,
+  //       });
+  //     }
+  //   }
+  // }
 });
 
 /**
@@ -349,8 +349,13 @@ let currentIntersect = null;
 
 const updateMeshes = () => {
   meshes.forEach((o, i) => {
-    o.scale.x = settings.meshWidth;
-    o.scale.y = settings.meshHeight;
+    if (sizes.width < 768) {
+      o.scale.x = settings.meshWidth;
+      o.scale.y = settings.meshHeight;
+    } else {
+      o.scale.x = 2.4;
+      o.scale.y = 2.4;
+    }
     // ======== scroll effect ========
     o.position.x += currentScroll * 0.01;
     // // If the mesh goes out of bounds on the left side, move it to the right
