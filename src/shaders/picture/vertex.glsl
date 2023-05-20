@@ -47,8 +47,8 @@ void main()
   vec4 modelPosition = modelMatrix * mixedPosition;
   vec4 fullScreenState = vec4(position, 1.0);
 
-  fullScreenState.x *=  uResolution.x  / uQuadSize.x ;
-  fullScreenState.y *=  uResolution.y / uQuadSize.y;
+  fullScreenState.x *=  uResolution.x;
+  fullScreenState.y *=  uResolution.y;
 
   modelPosition.z += sin(modelPosition.x * 1.0) * 5. * uScrollY;
 // =============================================== HALF OF SCREEN EFFECT ===============================================

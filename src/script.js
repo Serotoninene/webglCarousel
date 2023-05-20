@@ -86,6 +86,7 @@ let settings = {
   lerpY: 0.324,
   progress: 1,
   meshWidth: 2.4,
+  meshHeight: 2.4,
   scale: 1,
   snapDelta: 0.717,
   uValue: [],
@@ -94,6 +95,7 @@ const gui = new GUI();
 gui.add(settings, "lerpY", 0, 1, 0.001);
 gui.add(settings, "snapDelta", 0, 1, 0.001);
 gui.add(settings, "meshWidth", 0, 5, 0.1);
+gui.add(settings, "meshHeight", 0, 5, 0.1);
 
 /**
  * Base
@@ -108,6 +110,7 @@ let sizes = {
   width: window.innerWidth,
   height: window.innerHeight,
 };
+
 let ndcWidth;
 let ndcHeight;
 
@@ -117,7 +120,7 @@ const canvasSizes = {
 };
 
 const meshWidth = settings.meshWidth;
-const meshHeight = meshWidth;
+const meshHeight = settings.meshHeight;
 
 const margin = 3.5;
 const n = 8;
@@ -238,12 +241,10 @@ for (let i = 0; i < n; i++) {
     );
   });
 
-  const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(meshWidth, meshHeight, 16, 16),
-    material[i]
-  );
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 4, 4), material[i]);
   mesh.position.y = 0.1;
   mesh.position.x = i * margin;
+  mesh.scale.set(meshWidth, meshHeight, 1);
 
   meshes.push(mesh);
   group.add(mesh);
@@ -289,7 +290,7 @@ window.addEventListener("touchstart", (e) => {
 
 window.addEventListener("touchmove", (e) => {
   touchEnd = e.touches[0].clientX;
-  scrollTarget = (touchEnd - touchStart) * 0.2;
+  scrollTarget = (touchEnd - touchStart) * 0.175;
 });
 
 window.addEventListener("touchend", (e) => {
@@ -348,6 +349,8 @@ let currentIntersect = null;
 
 const updateMeshes = () => {
   meshes.forEach((o, i) => {
+    o.scale.x = settings.meshWidth;
+    o.scale.y = settings.meshHeight;
     // ======== scroll effect ========
     o.position.x += currentScroll * 0.01;
     // // If the mesh goes out of bounds on the left side, move it to the right
@@ -430,10 +433,16 @@ const tick = () => {
   scrollTarget *= 0.9;
   currentScroll = scrollSpead * 0.5;
 
+  updateMeshes();
+
   // Update uniforms
   meshes.forEach((_, i) => {
     material[i].uniforms.uScrollY.value = scrollTarget / canvasSizes.height;
     material[i].uniforms.uTime.value = elapsedTime;
+    material[i].uniforms.uQuadSize.value = new THREE.Vector2(
+      settings.meshWidth,
+      settings.meshHeight
+    );
 
     if (i === currentPlane) {
       timelines[i].progress(settings.progress);
@@ -443,8 +452,6 @@ const tick = () => {
       _.position.y += settings.progress * -10;
     }
   });
-
-  updateMeshes();
 
   // Render
   renderer.render(scene, camera);
@@ -470,8 +477,6 @@ function handlingGSAP() {
   const projectLocation = document.querySelector(".project-location");
 
   const array = [projectIndex, projectName, projectLocation];
-
-  // ============== SCALE ANIMATION ==============
 
   // ============== WORDING ANIMATION ==============
   // if the user is scrolling, hide the project description
