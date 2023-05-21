@@ -85,8 +85,8 @@ const texturesToLoad = [
 let settings = {
   lerpY: 0.324,
   progress: 1,
-  meshWidth: 1.7,
-  meshHeight: 2.5,
+  meshWidth: 1.4,
+  meshHeight: 2.2,
   snapDelta: 0.717,
   uValue: [],
 };
@@ -131,6 +131,18 @@ let currentPlane = 0;
 let meshes = [];
 let material = [];
 
+if (sizes.width < 768) {
+  meshWidth = settings.meshWidth;
+  meshHeight = settings.meshHeight;
+  margin = 1.8;
+  wholeWidth = n * margin;
+} else {
+  meshWidth = 2.4;
+  meshHeight = 2.4;
+  margin = 3.5;
+  wholeWidth = n * margin;
+}
+
 // Scene
 const scene = new THREE.Scene();
 
@@ -173,13 +185,26 @@ window.addEventListener("resize", () => {
     2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
   ndcWidth = canvasSizes.width * r;
 
-  meshes.forEach(
-    (mesh) =>
-      (mesh.material.uniforms.uResolution.value = new THREE.Vector2(
-        ndcWidth,
-        ndcHeight
-      ))
-  );
+  if (sizes.width < 768) {
+    meshWidth = settings.meshWidth;
+    meshHeight = settings.meshHeight;
+    margin = 1.8;
+    wholeWidth = n * margin;
+  } else {
+    meshWidth = 2.4;
+    meshHeight = 2.4;
+    margin = 3.5;
+    wholeWidth = n * margin;
+  }
+
+  meshes.forEach((mesh, i) => {
+    mesh.position.x = i * margin;
+    mesh.material.uniforms.uResolution.value = new THREE.Vector2(
+      ndcWidth,
+      ndcHeight
+    );
+  });
+
   // Update renderer
   renderer.setSize(canvasSizes.width, canvasSizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -242,7 +267,11 @@ for (let i = 0; i < n; i++) {
   });
 
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 4, 4), material[i]);
-  mesh.position.y = 0.1;
+  if (sizes.width < 768) {
+    mesh.position.y = 5;
+  } else {
+    mesh.position.y = 0.1;
+  }
   mesh.position.x = i * margin;
   mesh.scale.set(meshWidth, meshHeight, 1);
 
@@ -313,32 +342,33 @@ window.addEventListener("mousemove", (event) => {
  * Mouse click
  */
 window.addEventListener("click", () => {
-  // if (currentIntersect) {
-  //   const { x } = currentIntersect.object.position;
-  //   if (Math.abs(x) >= 0.05) {
-  //     ndcWidth =
-  //       2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-  //     // if the user click on a plane on the left/right side -> centers it
-  //     scrollTarget = x * (ndcWidth - margin * 2) * 10;
-  //     scrollTarget *= 0.8;
-  //   } else {
-  //     // if the user click on a plane on the center -> open the project
-  //     if (settings.progress === 0) {
-  //       // if the user click on a plane on the center -> open the project
-  //       gsap.to(settings, {
-  //         progress: 1,
-  //         duration: 0.8,
-  //         ease: Power3.easeInOut,
-  //       });
-  //     } else {
-  //       gsap.to(settings, {
-  //         progress: 0,
-  //         duration: 0.8,
-  //         ease: Power3.easeInOut,
-  //       });
-  //     }
-  //   }
-  // }
+  if (currentIntersect) {
+    const { x } = currentIntersect.object.position;
+    if (Math.abs(x) >= 0.05) {
+      // ndcWidth =
+      //   2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
+      // if the user click on a plane on the left/right side -> centers it
+      scrollTarget = -1 * (((x * ndcWidth * 2) / margin) * 10);
+      console.log(scrollTarget);
+      scrollTarget *= 0.8;
+    } else {
+      // if the user click on a plane on the center -> open the project
+      if (settings.progress === 0) {
+        // if the user click on a plane on the center -> open the project
+        gsap.to(settings, {
+          progress: 1,
+          duration: 0.8,
+          ease: Power3.easeInOut,
+        });
+      } else {
+        gsap.to(settings, {
+          progress: 0,
+          duration: 0.8,
+          ease: Power3.easeInOut,
+        });
+      }
+    }
+  }
 });
 
 /**
@@ -358,7 +388,7 @@ const updateMeshes = () => {
     }
     // ======== scroll effect ========
     o.position.x += currentScroll * 0.01;
-    // // If the mesh goes out of bounds on the left side, move it to the right
+    // If the mesh goes out of bounds on the left side, move it to the right
     if (o.position.x < -wholeWidth / 2) o.position.x += wholeWidth;
     // // If the mesh goes out of bounds on the right side, move it to the left
     if (o.position.x > wholeWidth / 2) o.position.x -= wholeWidth;
@@ -381,7 +411,11 @@ const updateMeshes = () => {
       Math.abs(Math.sin(o.position.x * 0.5)) * -1,
       settings.lerpY
     );
-    o.position.y *= 0.5;
+    if (sizes.width < 768) {
+      o.position.y *= 0.35;
+    } else {
+      o.position.y *= 0.5;
+    }
 
     // define the index of the currentPlane in the center
     if (rounded === 0) {
@@ -445,8 +479,8 @@ const tick = () => {
     material[i].uniforms.uScrollY.value = scrollTarget / canvasSizes.height;
     material[i].uniforms.uTime.value = elapsedTime;
     material[i].uniforms.uQuadSize.value = new THREE.Vector2(
-      settings.meshWidth,
-      settings.meshHeight
+      sizes.width < 768 ? settings.meshWidth : 2.4,
+      sizes.width < 768 ? settings.meshHeight : 2.4
     );
 
     if (i === currentPlane) {
