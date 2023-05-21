@@ -180,10 +180,12 @@ window.addEventListener("resize", () => {
   camera.aspect = canvasSizes.width / canvasSizes.height;
   camera.updateProjectionMatrix();
 
+  let aspect = canvasSizes.width / canvasSizes.height;
+
   // update ndcWidth and ndcHeight
   ndcHeight =
     2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-  ndcWidth = canvasSizes.width * r;
+  ndcWidth = ndcHeight * aspect;
 
   if (sizes.width < 768) {
     meshWidth = settings.meshWidth;
@@ -295,7 +297,6 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(canvasSizes.width, canvasSizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-console.log(canvas.clientHeight);
 /**
  * Scroll
  */
@@ -348,8 +349,9 @@ window.addEventListener("click", () => {
       // ndcWidth =
       //   2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
       // if the user click on a plane on the left/right side -> centers it
-      scrollTarget = -1 * (((x * ndcWidth * 2) / margin) * 10);
-      console.log(scrollTarget);
+      scrollTarget =
+        sizes.width > 1400 ? 0 : -1 * (((x * ndcWidth * 2) / margin) * 10);
+      // take into account the size of the screen
       scrollTarget *= 0.8;
     } else {
       // if the user click on a plane on the center -> open the project

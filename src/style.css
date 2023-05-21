@@ -11,7 +11,7 @@ body {
   font-weight: 400;
 }
 
-body {
+body.body {
   transform: translate3d(0, 100%, 0);
 }
 
@@ -24,6 +24,12 @@ body {
   left: 0;
   pointer-events: none;
   outline: none;
+}
+
+.webglInside {
+  background: salmon;
+  height: 80vh;
+  width: 70vw;
 }
 
 main {
