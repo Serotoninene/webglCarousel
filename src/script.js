@@ -5,9 +5,11 @@ import gsap, { Power2, Power3 } from "gsap";
 import { GUI } from "lil-gui";
 import Stats from "stats-js";
 
+import barba from "@barba/core";
+
 const stats = new Stats();
-stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild(stats.dom);
+// stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+// document.body.appendChild(stats.dom);
 
 // ----------------- CONTENT -----------------  //
 const content = [
@@ -90,11 +92,11 @@ let settings = {
   snapDelta: 0.717,
   uValue: [],
 };
-const gui = new GUI();
-gui.add(settings, "lerpY", 0, 1, 0.001);
-gui.add(settings, "snapDelta", 0, 1, 0.001);
-gui.add(settings, "meshWidth", 0, 5, 0.1);
-gui.add(settings, "meshHeight", 0, 5, 0.1);
+// const gui = new GUI();
+// gui.add(settings, "lerpY", 0, 1, 0.001);
+// gui.add(settings, "snapDelta", 0, 1, 0.001);
+// gui.add(settings, "meshWidth", 0, 5, 0.1);
+// gui.add(settings, "meshHeight", 0, 5, 0.1);
 
 /**
  * Base
@@ -125,7 +127,6 @@ let margin = 3.5;
 
 const n = 8;
 let wholeWidth = n * margin;
-const group = new THREE.Group();
 
 let currentPlane = 0;
 let meshes = [];
@@ -161,11 +162,12 @@ const texturePromises = texturesToLoad.map(
       });
     })
 );
+
 /**
  * Handling resize
  */
 
-window.addEventListener("resize", () => {
+const handleResize = () => {
   const widthRatio = canvasSizes.width / sizes.width;
   const heightRatio = canvasSizes.height / sizes.height;
 
@@ -210,7 +212,9 @@ window.addEventListener("resize", () => {
   // Update renderer
   renderer.setSize(canvasSizes.width, canvasSizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-});
+};
+
+window.addEventListener("resize", handleResize);
 
 /**
  * Camera
@@ -281,7 +285,6 @@ for (let i = 0; i < n; i++) {
   mesh.scale.set(meshWidth, meshHeight, 1);
 
   meshes.push(mesh);
-  group.add(mesh);
   scene.add(mesh);
 }
 const timelines = [];
@@ -308,28 +311,36 @@ let scrollSpead = 0;
 let currentScroll = 0;
 let isInMotion = false;
 
+const handleMouseWheel = (event) => {
+  scrollTarget = event.wheelDeltaY * 0.3;
+};
+
 // ============ Scroll ============
-window.addEventListener("mousewheel", (e) => {
-  scrollTarget = e.wheelDeltaY * 0.3;
-});
+window.addEventListener("mousewheel", handleMouseWheel);
 
 // ============ Touch ============
 let touchStart = 0;
 let touchEnd = 0;
 
-window.addEventListener("touchstart", (e) => {
-  touchStart = e.touches[0].clientX;
-});
+const handleTouchStart = (event) => {
+  touchStart = event.touches[0].clientX;
+};
 
-window.addEventListener("touchmove", (e) => {
+window.addEventListener("touchstart", handleTouchStart);
+
+const handleTouchMove = (e) => {
   touchEnd = e.touches[0].clientX;
   scrollTarget = (touchEnd - touchStart) * 0.175;
-});
+};
 
-window.addEventListener("touchend", (e) => {
+window.addEventListener("touchmove", handleTouchMove);
+
+const handleTouchEnd = (event) => {
   touchStart = 0;
   touchEnd = 0;
-});
+};
+
+window.addEventListener("touchend", handleTouchEnd);
 
 /**
  * Mouse postion
@@ -337,20 +348,17 @@ window.addEventListener("touchend", (e) => {
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-window.addEventListener("mousemove", (event) => {
+const handleMouseMove = (event) => {
   mouse.x = (event.clientX / canvasSizes.width) * 2 - 1;
   mouse.y = -(event.clientY / canvasSizes.height) * 2 + 1;
-});
+};
 
-/**
- * Mouse click
- */
-window.addEventListener("click", () => {
+window.addEventListener("mousemove", handleMouseMove);
+
+const handleClick = () => {
   if (currentIntersect) {
     const { x } = currentIntersect.object.position;
     if (Math.abs(x) >= 0.05) {
-      // ndcWidth =
-      //   2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
       // if the user click on a plane on the left/right side -> centers it
       scrollTarget =
         sizes.width > 1600 ? 0 : -1 * (((x * ndcWidth * 2) / margin) * 10);
@@ -360,11 +368,11 @@ window.addEventListener("click", () => {
       // if the user click on a plane on the center -> open the project
       if (settings.progress === 0) {
         // if the user click on a plane on the center -> open the project
-        gsap.to(settings, {
-          progress: 1,
-          duration: 0.8,
-          ease: Power3.easeInOut,
-        });
+        // gsap.to(settings, {
+        //   progress: 1,
+        //   duration: 0.8,
+        //   ease: Power3.easeInOut,
+        // });
       } else {
         gsap.to(settings, {
           progress: 0,
@@ -374,7 +382,12 @@ window.addEventListener("click", () => {
       }
     }
   }
-});
+};
+
+/**
+ * Mouse click
+ */
+window.addEventListener("click", handleClick);
 
 /**
  * Animate
@@ -521,9 +534,7 @@ function handlingGSAP() {
   const projectIndex = document.querySelector(".project-index span");
   const projectName = document.querySelector(".project-name");
   const projectLocation = document.querySelector(".project-location");
-
   const array = [projectIndex, projectName, projectLocation];
-
   // ============== WORDING ANIMATION ==============
   // if the user is scrolling, hide the project description
   if (isInMotion) {
@@ -533,7 +544,6 @@ function handlingGSAP() {
     });
   } else {
     // WHEN STOP SCROLLING, SHOW THE PROJECT DESCRIPTION with stagger and opacity back to 1
-    // can you refactor the next 3 lines
     const index = content[currentPlane].id.toString().padStart(2, "0");
     const name = content[currentPlane].name;
     const location = content[currentPlane].location;
@@ -546,3 +556,59 @@ function handlingGSAP() {
     });
   }
 }
+console.log(scene);
+
+// ============== BARBA TRANSITION ==============
+barba.init({
+  transitions: [
+    {
+      name: "from-home-page-transition",
+      from: {
+        namespace: ["home"],
+      },
+      leave(data) {
+        const tl = gsap.timeline();
+        return tl.to(settings, {
+          progress: 1,
+          duration: 0.8,
+          ease: Power3.easeInOut,
+          onComplete: () => {
+            // clean up the THREEjs scene
+            meshes.forEach((mesh, i) => {
+              scene.remove(mesh);
+            });
+            // clean up the event listeners
+            window.removeEventListener("mousewheel", handleMouseWheel);
+            window.removeEventListener("touchstart", handleTouchStart);
+            window.removeEventListener("touchmove", handleTouchMove);
+            window.removeEventListener("touchend", handleTouchEnd);
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("click", handleClick);
+            window.removeEventListener("resize", handleResize);
+          },
+        });
+      },
+      enter(data) {
+        const tl = gsap.timeline();
+        tl.from(data.next.container, {
+          opacity: 0,
+        });
+      },
+    },
+    {
+      name: "from-project-page-transition",
+      from: {
+        namespace: ["page-a"],
+      },
+      leave(data) {
+        return gsap.timeline().to(data.current.container, { x: "100%" });
+      },
+      enter(data) {
+        // setup the THREEjs scene
+        console.log("scene when entering again : ", meshes);
+
+        const tl = gsap.timeline().from(data.next.container, { x: "-100%" });
+      },
+    },
+  ],
+});

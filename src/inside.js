@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import vertexShader from "./shaders/insidePicture/vertex.glsl";
 import fragmentShader from "./shaders/insidePicture/fragment.glsl";
+import barba from "@barba/core";
+import { gsap } from "gsap";
 
 /**
  * Base
@@ -130,3 +132,28 @@ const tick = () => {
 };
 
 tick();
+
+// barba.init({
+//   transitions: [
+//     {
+//       name: "page-transition",
+//       from: {
+//         namespace: ["inside"],
+//       },
+//       leave(data) {
+//         console.log("leaving");
+//         const tl = gsap.timeline();
+//         return tl.to(data.current.container, {
+//           opacity: 0,
+//         });
+//       },
+//       enter(data) {
+//         console.log("entering");
+//         const tl = gsap.timeline();
+//         tl.from(data.next.container, {
+//           opacity: 0,
+//         });
+//       },
+//     },
+//   ],
+// });

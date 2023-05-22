@@ -12,7 +12,7 @@ body {
 }
 
 body.body {
-  transform: translate3d(0, 100%, 0);
+  /* transform: translate3d(0, 100%, 0); */
 }
 
 .webgl {
@@ -29,10 +29,6 @@ body.body {
 a {
   text-decoration: none;
   color: inherit;
-}
-
-.inside-container {
-  opacity: 0.5;
 }
 
 .webglInside {
