@@ -14,8 +14,8 @@
 
 <body class="body" data-barba="wrapper">
 
-  <main>
-    <canvas class="webgl" data-barba="container"></canvas>
+  <main data-barba="container" data-barba-namespace="home">
+    <canvas class="webgl"></canvas>
     <header>
       <h1>avaa architectes</h1>
       <p>AGENCE D'ARCHITECTURE <br /> SITUÉE SUR LE BASSIN D'ARCACHON</p>
@@ -24,13 +24,13 @@
 
     <div class="container">
       <section>
-        <a href="./inside.html" class="project-link">
-          <p class="project-index">
-            <span>[01]</span>
-          </p>
-          <h2 class="project-name">Extension d’une maison sur le port</h2>
-          <p class="project-location">GUJAN-MESTRAS</p>
-        </a>
+        <!-- <a href="./inside.html" class="project-link"> -->
+        <p class="project-index">
+          <span>[01]</span>
+        </p>
+        <h2 class="project-name">Extension d’une maison sur le port</h2>
+        <p class="project-location">GUJAN-MESTRAS</p>
+        <!-- </a> -->
       </section>
 
       <footer>©2023. Site réalisé par Polish Studio.</footer>
@@ -38,6 +38,7 @@
   </main>
 
   <script type="module" src="./script.js"></script>
+  <!-- <script type="module" src="./barbalogic.js"></script> -->
 </body>
 
 </html>

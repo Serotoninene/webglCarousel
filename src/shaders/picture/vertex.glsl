@@ -32,7 +32,7 @@ void main()
   float distance = length(position.xy - center);
 
   // Determine the radius for the rounded corners
-  float cornerRadius = 0.5 * 2.4; // Radius in pixels
+  float cornerRadius = 0.5 * 1.; // Radius in pixels
   float circle = circleShape(distance, position.xy);
 
   // =================== ROUNDED SHAPE ===================

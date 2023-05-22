@@ -268,7 +268,10 @@ for (let i = 0; i < n; i++) {
     );
   });
 
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 4, 4), material[i]);
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1, 32, 32),
+    material[i]
+  );
   if (sizes.width < 768) {
     mesh.position.y = 5;
   } else {
@@ -456,6 +459,8 @@ const updateMeshes = () => {
         });
       }
     }
+
+    console.log(settings.uValue[currentPlane].value);
   });
 
   handlingGSAP();
