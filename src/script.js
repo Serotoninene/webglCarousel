@@ -353,7 +353,7 @@ window.addEventListener("click", () => {
       //   2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
       // if the user click on a plane on the left/right side -> centers it
       scrollTarget =
-        sizes.width > 1400 ? 0 : -1 * (((x * ndcWidth * 2) / margin) * 10);
+        sizes.width > 1600 ? 0 : -1 * (((x * ndcWidth * 2) / margin) * 10);
       // take into account the size of the screen
       scrollTarget *= 0.8;
     } else {
