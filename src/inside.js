@@ -54,7 +54,7 @@ window.addEventListener("resize", () => {
   // update ndcWidth and ndcHeight
   ndcHeight =
     2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-  ndcWidth = canvasSizes.width * r;
+  ndcWidth = ndcHeight * aspect;
 
   mesh.material.uniforms.uResolution.value = new THREE.Vector2(
     ndcWidth,
@@ -84,8 +84,6 @@ let aspect = canvasSizes.width / canvasSizes.height;
 ndcHeight =
   2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
 ndcWidth = ndcHeight * aspect;
-
-const r = ndcWidth / canvasSizes.width;
 
 const material = new THREE.ShaderMaterial({
   uniforms: {

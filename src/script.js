@@ -445,9 +445,11 @@ const updateMeshes = () => {
       currentIntersect.object.material.uniforms.uValue.value =
         settings.uValue[currentPlane].value;
 
-      gsap.to(settings.uValue[currentPlane], {
-        value: 1,
-      });
+      if (sizes.width > 768) {
+        gsap.to(settings.uValue[currentPlane], {
+          value: 1,
+        });
+      }
     } else {
       document.body.style.cursor = "auto";
       currentIntersect.object.material.uniforms.uValue.value =
@@ -459,8 +461,6 @@ const updateMeshes = () => {
         });
       }
     }
-
-    console.log(settings.uValue[currentPlane].value);
   });
 
   handlingGSAP();

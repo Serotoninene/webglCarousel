@@ -26,6 +26,15 @@ body.body {
   outline: none;
 }
 
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.inside-container {
+  opacity: 0.5;
+}
+
 .webglInside {
   background: salmon;
   height: 80vh;

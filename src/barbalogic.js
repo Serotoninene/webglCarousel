@@ -6,15 +6,14 @@ barba.init({
     {
       name: "opacity-transition",
       leave(data) {
-        // console.log(data);
         return gsap.to(data.current.container, {
           opacity: 0,
         });
       },
       enter(data) {
         console.log(data);
-        return gsap.from(data.next.container, {
-          opacity: 0,
+        return gsap.to(data.next.container, {
+          opacity: 1,
         });
       },
     },
