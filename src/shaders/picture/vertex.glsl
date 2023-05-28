@@ -1,10 +1,8 @@
 uniform float uScrollY;
-uniform float uTime;
 uniform float uProgress;
 uniform float uValue;
 uniform vec2 uResolution; 
 uniform vec2 uQuadSize;
-uniform vec4 uCorners;
 
 
 varying vec2 vUv;
@@ -32,11 +30,15 @@ void main()
   float distance = length(position.xy - center);
 
   // Determine the radius for the rounded corners
-  float cornerRadius = 0.5 * 1.; // Radius in pixels
-  float circle = circleShape(distance, position.xy);
+  float cornerRadius = 0.5; // Radius in pixels
+  float smoothness = 0.1; // Controls the smoothness of the rounded corners
+  float startTransition = cornerRadius - smoothness;
+  float endTransition = cornerRadius + smoothness;
+  float rounded = smoothstep(startTransition, endTransition, distance);
+
 
   // =================== ROUNDED SHAPE ===================
-  newPosition.xy = mix(position.xy, normalize(position.xy + vec2(0.00001)) * cornerRadius, smoothstep(cornerRadius, cornerRadius, distance));
+  newPosition.xy = mix(position.xy, normalize(position.xy + vec2(0.00001)) * cornerRadius, rounded);
   newPosition.xy = mix(newPosition.xy, position.xy, step(0.0, position.x) * step(position.y, 0.0));
 
   // do the transition, using uValue between the position and the newPOsition

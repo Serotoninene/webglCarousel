@@ -15,6 +15,17 @@ body.body {
   /* transform: translate3d(0, 100%, 0); */
 }
 
+.image {
+  height: 100vh;
+  width: 100vw;
+}
+
+.image img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
 .webgl {
   height: 100vh;
   width: 100vw;
@@ -33,11 +44,12 @@ a {
 
 .webglInside {
   background: salmon;
-  height: 80vh;
-  width: 70vw;
+  height: 100vh;
+  width: 100vw;
 }
 
-main {
+main.home {
+  position: relative;
   height: 100vh;
   width: 100vw;
   display: flex;

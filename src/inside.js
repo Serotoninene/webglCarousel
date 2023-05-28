@@ -1,43 +1,114 @@
 import * as THREE from "three";
-import vertexShader from "./shaders/insidePicture/vertex.glsl";
-import fragmentShader from "./shaders/insidePicture/fragment.glsl";
 import barba from "@barba/core";
 import { gsap } from "gsap";
+import vertexShader from "./shaders/insidePicture/vertex.glsl";
+import fragmentShader from "./shaders/insidePicture/fragment.glsl";
 
-/**
- * Base
- */
-// Canvas
-const canvas = document.querySelector("canvas.webglInside");
+let canvas;
+let sizes;
+let canvasSizes;
+let scene;
+let textureLoader;
+let texture;
+let camera;
+let material;
+let mesh;
+let renderer;
+let clock;
 
-let sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight,
-};
+export function setup() {
+  // Canvas
+  canvas = document.querySelector("canvas.webglInside");
 
-let ndcWidth;
-let ndcHeight;
+  sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
 
-const canvasSizes = {
-  width: canvas.clientWidth,
-  height: canvas.clientHeight,
-};
+  canvasSizes = {
+    width: canvas.clientWidth,
+    height: canvas.clientHeight,
+  };
 
-// Scene
-const scene = new THREE.Scene();
-let textureWidth = 0;
-let textureHeight = 0;
+  // Scene
+  scene = new THREE.Scene();
 
-/**
- * Objects
- */
-// Texture
-const textureLoader = new THREE.TextureLoader();
-const texture = textureLoader.load("/textures/texture1.jpg");
-/**
- * Handling resize
- */
+  // Texture
+  textureLoader = new THREE.TextureLoader();
+  texture = textureLoader.load("/textures/texture1.jpg");
 
+  // Camera
+  camera = new THREE.PerspectiveCamera(
+    35,
+    canvasSizes.width / canvasSizes.height,
+    0.1,
+    100
+  );
+
+  camera.position.z = 99;
+
+  let aspect = canvasSizes.width / canvasSizes.height;
+
+  let ndcHeight =
+    2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
+  let ndcWidth = ndcHeight * aspect;
+
+  material = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0.0 },
+      uResolution: {
+        value: new THREE.Vector2(ndcWidth, ndcHeight),
+      },
+      uTexture: { value: texture },
+      uTextureSize: {
+        value: new THREE.Vector2(0, 0),
+      },
+      uQuadSize: { value: new THREE.Vector2(0, 0) },
+    },
+    vertexShader: vertexShader,
+    fragmentShader: fragmentShader,
+  });
+
+  mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 4, 4), material);
+  mesh.position.set(0, 0.5, 0);
+
+  scene.add(mesh);
+
+  renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    alpha: true,
+  });
+
+  renderer.setSize(canvasSizes.width, canvasSizes.height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  clock = new THREE.Clock();
+}
+
+export function cleanup() {
+  scene.remove(mesh);
+  mesh.geometry.dispose();
+  mesh.material.dispose();
+  renderer.dispose();
+}
+
+export function animate() {
+  material.uniforms.uTextureSize.value = new THREE.Vector2(
+    texture.image?.width,
+    texture.image?.height
+  );
+
+  // Update material
+  renderer.render(scene, camera);
+
+  // Call animate again on the next frame
+  window.requestAnimationFrame(animate);
+}
+
+setup();
+animate();
+
+// ============== EVENT LISTENER ==============
 window.addEventListener("resize", () => {
   const widthRatio = canvasSizes.width / sizes.width;
   const heightRatio = canvasSizes.height / sizes.height;
@@ -54,9 +125,9 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
 
   // update ndcWidth and ndcHeight
-  ndcHeight =
+  let ndcHeight =
     2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-  ndcWidth = ndcHeight * aspect;
+  let ndcWidth = ndcHeight * camera.aspect;
 
   mesh.material.uniforms.uResolution.value = new THREE.Vector2(
     ndcWidth,
@@ -67,93 +138,3 @@ window.addEventListener("resize", () => {
   renderer.setSize(canvasSizes.width, canvasSizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
-
-// **
-//  * Camera
-//  */
-// Base camera
-const camera = new THREE.PerspectiveCamera(
-  35,
-  canvasSizes.width / canvasSizes.height,
-  0.1,
-  100
-);
-
-camera.position.z = 99;
-
-let aspect = canvasSizes.width / canvasSizes.height;
-
-ndcHeight =
-  2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-ndcWidth = ndcHeight * aspect;
-
-const material = new THREE.ShaderMaterial({
-  uniforms: {
-    uTime: { value: 0.0 },
-    uResolution: {
-      value: new THREE.Vector2(ndcWidth, ndcHeight),
-    },
-    uTexture: { value: texture },
-    uTextureSize: {
-      value: new THREE.Vector2(textureWidth, textureHeight),
-    },
-    uQuadSize: { value: new THREE.Vector2(0, 0) },
-  },
-  vertexShader: vertexShader,
-  fragmentShader: fragmentShader,
-});
-
-const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 4, 4), material);
-mesh.position.set(0, 0.5, 0);
-
-scene.add(mesh);
-
-const renderer = new THREE.WebGLRenderer({
-  canvas: canvas,
-  alpha: true,
-});
-
-renderer.setSize(canvasSizes.width, canvasSizes.height);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-const clock = new THREE.Clock();
-
-const tick = () => {
-  material.uniforms.uTextureSize.value = new THREE.Vector2(
-    texture.image?.width,
-    texture.image?.height
-  );
-
-  // Update material
-  renderer.render(scene, camera);
-
-  // Call tick again on the next frame
-  window.requestAnimationFrame(tick);
-};
-
-tick();
-
-// barba.init({
-//   transitions: [
-//     {
-//       name: "page-transition",
-//       from: {
-//         namespace: ["inside"],
-//       },
-//       leave(data) {
-//         console.log("leaving");
-//         const tl = gsap.timeline();
-//         return tl.to(data.current.container, {
-//           opacity: 0,
-//         });
-//       },
-//       enter(data) {
-//         console.log("entering");
-//         const tl = gsap.timeline();
-//         tl.from(data.next.container, {
-//           opacity: 0,
-//         });
-//       },
-//     },
-//   ],
-// });

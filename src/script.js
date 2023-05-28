@@ -2,10 +2,7 @@ import * as THREE from "three";
 import testVertexShader from "./shaders/picture/vertex.glsl";
 import testFragmentShader from "./shaders/picture/fragment.glsl";
 import gsap, { Power2, Power3 } from "gsap";
-import { GUI } from "lil-gui";
 import Stats from "stats-js";
-
-import barba from "@barba/core";
 
 const stats = new Stats();
 // stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -90,7 +87,6 @@ let settings = {
   meshWidth: 1.4,
   meshHeight: 2.2,
   snapDelta: 0.717,
-  uValue: [],
 };
 // const gui = new GUI();
 // gui.add(settings, "lerpY", 0, 1, 0.001);
@@ -125,8 +121,8 @@ let meshHeight;
 
 let margin = 3.5;
 
-const n = 8;
-let wholeWidth = n * margin;
+const whereUComongFrom = 8;
+let wholeWidth = whereUComongFrom * margin;
 
 let currentPlane = 0;
 let meshes = [];
@@ -136,12 +132,12 @@ if (sizes.width < 768) {
   meshWidth = settings.meshWidth;
   meshHeight = settings.meshHeight;
   margin = 1.8;
-  wholeWidth = n * margin;
+  wholeWidth = whereUComongFrom * margin;
 } else {
   meshWidth = 2.4;
   meshHeight = 2.4;
   margin = 3.5;
-  wholeWidth = n * margin;
+  wholeWidth = whereUComongFrom * margin;
 }
 
 // Scene
@@ -193,12 +189,12 @@ const handleResize = () => {
     meshWidth = settings.meshWidth;
     meshHeight = settings.meshHeight;
     margin = 1.8;
-    wholeWidth = n * margin;
+    wholeWidth = whereUComongFrom * margin;
   } else {
     meshWidth = 2.4;
     meshHeight = 2.4;
     margin = 3.5;
-    wholeWidth = n * margin;
+    wholeWidth = whereUComongFrom * margin;
   }
 
   meshes.forEach((mesh, i) => {
@@ -235,64 +231,59 @@ ndcHeight =
   2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
 ndcWidth = ndcHeight * aspect;
 
-const r = ndcWidth / canvasSizes.width;
-
 let uResolution = new THREE.Vector2(ndcWidth, ndcHeight);
 
-//  ============ Objects ============
-for (let i = 0; i < n; i++) {
-  settings.uValue.push({ value: 0 });
-
-  material[i] = new THREE.ShaderMaterial({
-    uniforms: {
-      uScrollY: { value: 0.0 },
-      uTime: { value: 0.0 },
-      uProgress: { value: 0.0 },
-      uDistanceFromCenter: { value: 0.0 },
-      uCorners: { value: new THREE.Vector4(0, 0, 0, 0) },
-      uResolution: {
-        value: uResolution,
+const setUpObjects = () => {
+  for (let i = 0; i < whereUComongFrom; i++) {
+    material[i] = new THREE.ShaderMaterial({
+      uniforms: {
+        uIndex: { value: i },
+        uScrollY: { value: 0.0 },
+        uTime: { value: 0.0 },
+        uProgress: { value: 0.0 },
+        uDistanceFromCenter: { value: 0.0 },
+        uCorners: { value: new THREE.Vector4(0, 0, 0, 0) },
+        uResolution: {
+          value: uResolution,
+        },
+        uQuadSize: { value: new THREE.Vector2(meshWidth, meshHeight) },
+        uTextureSize: { value: new THREE.Vector2(0, 0) },
+        uTexture: { value: texture },
+        uValue: { value: 0 },
       },
-      uQuadSize: { value: new THREE.Vector2(meshWidth, meshHeight) },
-      uTextureSize: { value: new THREE.Vector2(0, 0) },
-      uTexture: { value: texture },
-      uValue: { value: settings.uValue[i].value },
-    },
-    vertexShader: testVertexShader,
-    fragmentShader: testFragmentShader,
-    // wireframe: true,
-  });
+      vertexShader: testVertexShader,
+      fragmentShader: testFragmentShader,
+      // wireframe: true,
+    });
 
-  Promise.all(texturePromises).then((textures) => {
-    material[i].uniforms.uTexture.value = textures[i];
+    Promise.all(texturePromises).then((textures) => {
+      material[i].uniforms.uTexture.value = textures[i];
 
-    material[i].uniforms.uTextureSize.value = new THREE.Vector2(
-      textures[i].image.width,
-      textures[i].image.height
+      material[i].uniforms.uTextureSize.value = new THREE.Vector2(
+        textures[i].image.width,
+        textures[i].image.height
+      );
+    });
+
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1, 32, 32),
+      material[i]
     );
-  });
+    if (sizes.width < 768) {
+      mesh.position.y = 5;
+    } else {
+      mesh.position.y = 0.1;
+    }
+    mesh.position.x = i * margin;
+    mesh.scale.set(meshWidth, meshHeight, 1);
 
-  const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(1, 1, 32, 32),
-    material[i]
-  );
-  if (sizes.width < 768) {
-    mesh.position.y = 5;
-  } else {
-    mesh.position.y = 0.1;
+    meshes.push(mesh);
+    scene.add(mesh);
   }
-  mesh.position.x = i * margin;
-  mesh.scale.set(meshWidth, meshHeight, 1);
+};
 
-  meshes.push(mesh);
-  scene.add(mesh);
-}
-const timelines = [];
-meshes.forEach((mesh, i) => {
-  const tl = gsap.timeline();
-
-  timelines.push(tl);
-});
+setUpObjects();
+//  ============ Objects ============
 
 /**
  * Renderer
@@ -368,11 +359,11 @@ const handleClick = () => {
       // if the user click on a plane on the center -> open the project
       if (settings.progress === 0) {
         // if the user click on a plane on the center -> open the project
-        // gsap.to(settings, {
-        //   progress: 1,
-        //   duration: 0.8,
-        //   ease: Power3.easeInOut,
-        // });
+        gsap.to(settings, {
+          progress: 1,
+          duration: 0.8,
+          ease: Power3.easeInOut,
+        });
       } else {
         gsap.to(settings, {
           progress: 0,
@@ -451,26 +442,19 @@ const updateMeshes = () => {
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(meshes);
 
+    for (let i = 0; i < whereUComongFrom; i++) {
+      gsap.to(meshes[i].material.uniforms.uValue, {
+        value: 0,
+        duration: 0.4,
+      });
+    }
+
     if (intersects.length) {
-      currentIntersect = intersects[0];
       document.body.style.cursor = "pointer";
-
-      currentIntersect.object.material.uniforms.uValue.value =
-        settings.uValue[currentPlane].value;
-
+      currentIntersect = intersects[0];
       if (sizes.width > 768) {
-        gsap.to(settings.uValue[currentPlane], {
-          value: 1,
-        });
-      }
-    } else {
-      document.body.style.cursor = "auto";
-      currentIntersect.object.material.uniforms.uValue.value =
-        settings.uValue[currentPlane].value;
-      for (let i = 0; i < n; i++) {
-        gsap.to(settings.uValue[i], {
-          value: 0,
-          duration: 0.4,
+        gsap.to(currentIntersect.object.material.uniforms.uValue, {
+          value: 2,
         });
       }
     }
@@ -479,13 +463,9 @@ const updateMeshes = () => {
   handlingGSAP();
 };
 
-let previousTime = 0;
-
 const tick = () => {
   stats.begin();
   const elapsedTime = clock.getElapsedTime();
-
-  previousTime = elapsedTime;
 
   scrollSpead += (scrollTarget - scrollSpead) * 0.5;
   scrollSpead *= 0.9;
@@ -497,18 +477,16 @@ const tick = () => {
   // Update uniforms
   meshes.forEach((_, i) => {
     material[i].uniforms.uScrollY.value = scrollTarget / canvasSizes.height;
-    material[i].uniforms.uTime.value = elapsedTime;
     material[i].uniforms.uQuadSize.value = new THREE.Vector2(
       sizes.width < 768 ? settings.meshWidth : 2.4,
       sizes.width < 768 ? settings.meshHeight : 2.4
     );
 
     if (i === currentPlane) {
-      timelines[i].progress(settings.progress);
       material[i].uniforms.uProgress.value = settings.progress;
-      _.position.z = 0.1;
+      // _.position.z = 0.1;
     } else {
-      _.position.y += settings.progress * -10;
+      // _.position.y += settings.progress * -10;
     }
   });
 
@@ -556,59 +534,3 @@ function handlingGSAP() {
     });
   }
 }
-console.log(scene);
-
-// ============== BARBA TRANSITION ==============
-barba.init({
-  transitions: [
-    {
-      name: "from-home-page-transition",
-      from: {
-        namespace: ["home"],
-      },
-      leave(data) {
-        const tl = gsap.timeline();
-        return tl.to(settings, {
-          progress: 1,
-          duration: 0.8,
-          ease: Power3.easeInOut,
-          onComplete: () => {
-            // clean up the THREEjs scene
-            meshes.forEach((mesh, i) => {
-              scene.remove(mesh);
-            });
-            // clean up the event listeners
-            window.removeEventListener("mousewheel", handleMouseWheel);
-            window.removeEventListener("touchstart", handleTouchStart);
-            window.removeEventListener("touchmove", handleTouchMove);
-            window.removeEventListener("touchend", handleTouchEnd);
-            window.removeEventListener("mousemove", handleMouseMove);
-            window.removeEventListener("click", handleClick);
-            window.removeEventListener("resize", handleResize);
-          },
-        });
-      },
-      enter(data) {
-        const tl = gsap.timeline();
-        tl.from(data.next.container, {
-          opacity: 0,
-        });
-      },
-    },
-    {
-      name: "from-project-page-transition",
-      from: {
-        namespace: ["page-a"],
-      },
-      leave(data) {
-        return gsap.timeline().to(data.current.container, { x: "100%" });
-      },
-      enter(data) {
-        // setup the THREEjs scene
-        console.log("scene when entering again : ", meshes);
-
-        const tl = gsap.timeline().from(data.next.container, { x: "-100%" });
-      },
-    },
-  ],
-});
