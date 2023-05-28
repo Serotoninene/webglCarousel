@@ -333,7 +333,6 @@ class Scene {
         this.ndcWidth,
         this.ndcHeight
       );
-      s;
     });
 
     this.renderer.setSize(this.sizes.canvasWidth, this.sizes.canvasHeight);
