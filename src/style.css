@@ -116,6 +116,25 @@ footer {
   font-size: 12px;
 }
 
+.inside-container {
+  display: grid;
+  height: 100dvh;
+  gap: 32px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.inside-container .container {
+  opacity: 0;
+}
+
+.image.fullWidth {
+  grid-column: span 2;
+}
+
+.inside-container .image {
+  width: 100%;
+}
+
 /* MEDIA QUERIES */
 @media screen and (max-width: 640px) {
   header {

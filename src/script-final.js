@@ -1,10 +1,9 @@
 import * as THREE from "three";
 import gsap, { Power3 } from "gsap";
-import { GUI } from "lil-gui";
-import Stats from "stats-js";
 import vertexShader from "./shaders/picture/vertex.glsl";
 import fragmentShader from "./shaders/picture/fragment.glsl";
 import barba from "@barba/core";
+import { insideAnim } from "./inside";
 
 const content = [
   {
@@ -73,6 +72,7 @@ class Scene {
       snapDelta: 0.717,
     };
 
+    // Params
     this.n = 8;
     this.margin = 3.5;
     this.currentPlane = 0;
@@ -90,6 +90,7 @@ class Scene {
     this.mouse = new THREE.Vector2();
     this.currentIntersect = null;
 
+    // Setting up the threejs scene
     this.scene = new THREE.Scene();
     this.meshes = [];
     this.material = [];
@@ -100,14 +101,12 @@ class Scene {
       canvasWidth: this.canvas?.clientWidth,
       canvasHeight: this.canvas?.clientHeight,
     };
-
     this.camera = new THREE.PerspectiveCamera(
       35,
       this.sizes.canvasWidth / this.sizes.canvasHeight,
       0.1,
       100
     );
-
     this.camera.position.z = 6;
     this.camera.aspect = this.sizes.canvasWidth / this.sizes.canvasHeight;
 
@@ -124,11 +123,11 @@ class Scene {
     this.renderer.setSize(this.sizes.canvasWidth, this.sizes.canvasHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+    // Resize event
     this.handleResize = this.handleResize.bind(this);
     window.addEventListener("resize", this.handleResize);
 
-    // Other setup tasks
-    // this.handleRaycaster = this.handleRaycaster.bind(this);
+    // Init
     this.handleSettings();
     this.addObjects();
     this.handleEventListeners();
@@ -456,7 +455,8 @@ class Scene {
 
   cleanUp() {
     // Clean up tasks
-    // ...
+    window.removeEventListener("resize", this.handleResize);
+    window.cancelAnimationFrame(this.animate);
   }
 
   barba() {
@@ -478,6 +478,13 @@ class Scene {
               duration: 0.8,
               ease: Power3.easeInOut,
             });
+          },
+          beforeEnter(data) {
+            const img = data.next.container.querySelector(".image img");
+            console.log(img.src);
+          },
+          enter(data) {
+            insideAnim();
           },
         },
         {
