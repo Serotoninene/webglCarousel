@@ -386,30 +386,30 @@ class Scene {
   }
 
   handleWording() {
-    // const projectIndex = document.querySelector(".project-index span");
-    // const projectName = document.querySelector(".project-name");
-    // const projectLocation = document.querySelector(".project-location");
-    // const array = [projectIndex, projectName, projectLocation];
-    // // ============== WORDING ANIMATION ==============
-    // // if the user is scrolling, hide the project description
-    // if (this.isInMotion) {
-    //   gsap.to(array, {
-    //     stagger: 0.1,
-    //     opacity: 0,
-    //   });
-    // } else {
-    //   // WHEN STOP SCROLLING, SHOW THE PROJECT DESCRIPTION with stagger and opacity back to 1
-    //   const index = content[this.currentPlane].id.toString().padStart(2, "0");
-    //   const name = content[this.currentPlane].name;
-    //   const location = content[this.currentPlane].location;
-    //   projectIndex.textContent = `[${index}]`;
-    //   projectName.textContent = name;
-    //   projectLocation.textContent = location;
-    //   gsap.to(array, {
-    //     stagger: 0.1,
-    //     opacity: 1,
-    //   });
-    // }
+    const projectIndex = document.querySelector(".project-index span");
+    const projectName = document.querySelector(".project-name");
+    const projectLocation = document.querySelector(".project-location");
+    const array = [projectIndex, projectName, projectLocation];
+    // ============== WORDING ANIMATION ==============
+    // if the user is scrolling, hide the project description
+    if (this.isInMotion) {
+      gsap.to(array, {
+        stagger: 0.1,
+        opacity: 0,
+      });
+    } else {
+      // WHEN STOP SCROLLING, SHOW THE PROJECT DESCRIPTION with stagger and opacity back to 1
+      const index = content[this.currentPlane].id.toString().padStart(2, "0");
+      const name = content[this.currentPlane].name;
+      const location = content[this.currentPlane].location;
+      projectIndex.textContent = `[${index}]`;
+      projectName.textContent = name;
+      projectLocation.textContent = location;
+      gsap.to(array, {
+        stagger: 0.1,
+        opacity: 1,
+      });
+    }
   }
 
   updateMeshes() {
@@ -505,12 +505,10 @@ class Scene {
           beforeEnter(data) {},
           async enter(data) {
             that.handleSettings();
-            that.addObjects();
-          },
-          afterEnter(data) {
+            await that.addObjects();
             that.animate();
-            requestAnimationFrame(() => that.animate());
           },
+          afterEnter(data) {},
         },
       ],
     });
