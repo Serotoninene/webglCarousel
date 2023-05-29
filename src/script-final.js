@@ -157,12 +157,7 @@ class Scene {
     const textureLoader = new THREE.TextureLoader();
 
     for (let i = 0; i < this.n; i++) {
-      const texture = await new Promise((resolve) => {
-        textureLoader.load(content[i].image, (texture) => {
-          resolve(texture);
-        });
-      });
-
+      const texture = await textureLoader.loadAsync(content[i].image);
       this.material[i] = new THREE.ShaderMaterial({
         uniforms: {
           uScrollY: { value: 0.0 },
@@ -391,30 +386,30 @@ class Scene {
   }
 
   handleWording() {
-    const projectIndex = document.querySelector(".project-index span");
-    const projectName = document.querySelector(".project-name");
-    const projectLocation = document.querySelector(".project-location");
-    const array = [projectIndex, projectName, projectLocation];
-    // ============== WORDING ANIMATION ==============
-    // if the user is scrolling, hide the project description
-    if (this.isInMotion) {
-      gsap.to(array, {
-        stagger: 0.1,
-        opacity: 0,
-      });
-    } else {
-      // WHEN STOP SCROLLING, SHOW THE PROJECT DESCRIPTION with stagger and opacity back to 1
-      const index = content[this.currentPlane].id.toString().padStart(2, "0");
-      const name = content[this.currentPlane].name;
-      const location = content[this.currentPlane].location;
-      projectIndex.textContent = `[${index}]`;
-      projectName.textContent = name;
-      projectLocation.textContent = location;
-      gsap.to(array, {
-        stagger: 0.1,
-        opacity: 1,
-      });
-    }
+    // const projectIndex = document.querySelector(".project-index span");
+    // const projectName = document.querySelector(".project-name");
+    // const projectLocation = document.querySelector(".project-location");
+    // const array = [projectIndex, projectName, projectLocation];
+    // // ============== WORDING ANIMATION ==============
+    // // if the user is scrolling, hide the project description
+    // if (this.isInMotion) {
+    //   gsap.to(array, {
+    //     stagger: 0.1,
+    //     opacity: 0,
+    //   });
+    // } else {
+    //   // WHEN STOP SCROLLING, SHOW THE PROJECT DESCRIPTION with stagger and opacity back to 1
+    //   const index = content[this.currentPlane].id.toString().padStart(2, "0");
+    //   const name = content[this.currentPlane].name;
+    //   const location = content[this.currentPlane].location;
+    //   projectIndex.textContent = `[${index}]`;
+    //   projectName.textContent = name;
+    //   projectLocation.textContent = location;
+    //   gsap.to(array, {
+    //     stagger: 0.1,
+    //     opacity: 1,
+    //   });
+    // }
   }
 
   updateMeshes() {
