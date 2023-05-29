@@ -448,7 +448,6 @@ class Scene {
     this.handleRaycaster();
     this.updateMeshes();
     this.handleWording();
-
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(() => this.animate());
   }
@@ -457,12 +456,15 @@ class Scene {
     // Clean up tasks
     window.removeEventListener("resize", this.handleResize);
     window.cancelAnimationFrame(this.animate);
+    this.meshes = [];
+    this.material = [];
   }
 
   barba() {
     let that = this;
 
     barba.init({
+      debug: true,
       transitions: [
         {
           name: "from-home-page-transition",
@@ -479,9 +481,11 @@ class Scene {
               ease: Power3.easeInOut,
             });
           },
+          afterLeave(data) {
+            that.cleanUp();
+          },
           beforeEnter(data) {
             const img = data.next.container.querySelector(".image img");
-            console.log(img.src);
           },
           enter(data) {
             insideAnim();
@@ -499,9 +503,14 @@ class Scene {
               x: "-100%",
             });
           },
-          beforeEnter(data) {
-            this.handleSettings();
-            this.addObjects();
+          beforeEnter(data) {},
+          async enter(data) {
+            that.handleSettings();
+            that.addObjects();
+          },
+          afterEnter(data) {
+            that.animate();
+            requestAnimationFrame(() => that.animate());
           },
         },
       ],
