@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import gsap, { Power3 } from "gsap";
+import gsap, { Power2, Power3 } from "gsap";
 import vertexShader from "./shaders/picture/vertex.glsl";
 import fragmentShader from "./shaders/picture/fragment.glsl";
 import barba from "@barba/core";
@@ -433,7 +433,11 @@ class Scene {
 
   introAnim() {
     const introTl = gsap.timeline();
-    // introTl.to(".body", { y: 0, duration: 0.8, ease: Power2.easeInOut }, 1);
+    // introTl.from(
+    //   ".body",
+    //   { y: "100%", duration: 0.8, ease: Power2.easeInOut },
+    //   1
+    // );
     introTl.to(this.settings, {
       progress: 0,
       duration: 1,
