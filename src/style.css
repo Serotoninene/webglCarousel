@@ -15,7 +15,7 @@ body.body {
   /* transform: translate3d(0, 100%, 0); */
 }
 
-.canvasContainer {
+.canvas-container {
   position: fixed;
   top: 0;
   left: 0;

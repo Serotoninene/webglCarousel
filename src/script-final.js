@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import gsap, { Power2, Power3 } from "gsap";
+import gsap, { Power3 } from "gsap";
 import vertexShader from "./shaders/picture/vertex.glsl";
 import fragmentShader from "./shaders/picture/fragment.glsl";
 import barba from "@barba/core";
@@ -63,7 +63,8 @@ const content = [
 ];
 
 class Scene {
-  constructor() {
+  constructor(data) {
+    this.data = data;
     this.settings = {
       lerpY: 0.324,
       progress: 1,
@@ -95,7 +96,7 @@ class Scene {
     this.scene = new THREE.Scene();
     this.meshes = [];
     this.material = [];
-    this.canvas = document.querySelector(".canvasContainer");
+    this.canvas = document.querySelector(".canvas-container");
     this.sizes = {
       width: window.innerWidth,
       height: window.innerHeight,
@@ -136,8 +137,8 @@ class Scene {
     this.barba();
   }
 
-  init() {
-    this.canvas = document.querySelector(".canvasContainer");
+  async init() {
+    this.canvas = document.querySelector(".canvas-container");
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -146,7 +147,7 @@ class Scene {
 
     // Init
     this.handleSettings();
-    this.addObjects();
+    await this.addObjects();
     this.handleEventListeners();
     this.animate();
     this.introAnim();
@@ -172,7 +173,7 @@ class Scene {
     const textureLoader = new THREE.TextureLoader();
 
     for (let i = 0; i < this.n; i++) {
-      const texture = await textureLoader.loadAsync(content[i].image);
+      const texture = await textureLoader.loadAsync(this.data[i].image);
       this.material[i] = new THREE.ShaderMaterial({
         uniforms: {
           uScrollY: { value: 0.0 },
@@ -192,8 +193,103 @@ class Scene {
           },
           uValue: { value: 0 },
         },
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader,
+        vertexShader: `uniform float uScrollY;
+        uniform float uProgress;
+        uniform float uValue;
+        uniform vec2 uResolution; 
+        uniform vec2 uQuadSize;
+        
+        
+        varying vec2 vUv;
+        varying vec2 vSize;
+        
+        float PI = 3.141592653589793238;
+        
+        // make a circleShape function that takes a radius and returns a float
+        float circleShape(float radius, vec2 position) {
+          float value = distance(position, vec2(0.5));
+          return step(radius,value);
+        }
+        
+        void main()
+        {
+          vUv = uv;
+          vec3 newPosition = position;
+          float sine = sin(PI * uProgress);
+          float waves = sine * 0.1 * sin(5. * length(uv) + 5. * uProgress);
+          vSize = mix(uQuadSize, uResolution, uProgress);
+        
+        // =============================================== HOVER EFFECT ===============================================
+         // Calculate the distance from the vertex to the center
+          vec2 center = vec2(0.0, 0.0);
+          float distance = length(position.xy - center);
+        
+          // Determine the radius for the rounded corners
+          float cornerRadius = 0.5; // Radius in pixels
+          float smoothness = 0.1; // Controls the smoothness of the rounded corners
+          float startTransition = cornerRadius - smoothness;
+          float endTransition = cornerRadius + smoothness;
+          float rounded = smoothstep(startTransition, endTransition, distance);
+        
+        
+          // =================== ROUNDED SHAPE ===================
+          newPosition.xy = mix(position.xy, normalize(position.xy + vec2(0.00001)) * cornerRadius, rounded);
+          newPosition.xy = mix(newPosition.xy, position.xy, step(0.0, position.x) * step(position.y, 0.0));
+        
+          // do the transition, using uValue between the position and the newPOsition
+          vec4 mixedPosition = mix(vec4(position, 1.0), vec4(newPosition, 1.0), uValue);
+        // =============================================== END OF HOVER EFFECT ===============================================
+        
+        // =============================================== FULLSCREEN EFFECT ===============================================
+          vec4 modelPosition = modelMatrix * mixedPosition;
+          vec4 fullScreenState = vec4(position, 1.0);
+        
+          fullScreenState.x *=  uResolution.x;
+          fullScreenState.y *=  uResolution.y;
+        
+          modelPosition.z += sin(modelPosition.x * 1.0) * 5. * uScrollY;
+        // =============================================== HALF OF SCREEN EFFECT ===============================================
+        
+          vec4 mixedState = mix(modelPosition, fullScreenState, uProgress + waves  );
+        
+        
+          vec4 viewPosition = viewMatrix * mixedState;
+          vec4 projectedPosition = projectionMatrix * viewPosition;
+          
+          gl_Position = projectedPosition;  
+        }`,
+        fragmentShader: `precision highp float;
+        uniform vec2 uTextureSize;
+        uniform sampler2D uTexture;
+        uniform vec2 uQuadSize;
+        uniform float uValue;
+        
+        varying vec2 vUv;
+        varying vec2 vSize;
+        
+        vec2 getUV(vec2 uv, vec2 textureSize, vec2 quadSize){
+          vec2 tempUV = uv - vec2(0.5);
+        
+          float quadAspect = quadSize.x / quadSize.y;
+          float textureAspect = textureSize.x / textureSize.y;
+        
+          if(quadAspect < textureAspect){
+            tempUV *= vec2(quadAspect / textureAspect, 1.);
+          }else{
+            tempUV*= vec2(1., textureAspect / quadAspect);
+          }
+        
+          tempUV += vec2(0.5);
+          return tempUV;
+        }
+        
+        void main()
+        {
+          vec2 correctUV = getUV(vUv, uTextureSize, vSize);
+          vec4 color = texture2D(uTexture, correctUV);
+          gl_FragColor = vec4(color);
+          // gl_FragColor = vec4(vUv.xy, 0.0, 1.0);
+        }`,
       });
 
       const mesh = new THREE.Mesh(
@@ -418,9 +514,9 @@ class Scene {
       });
     } else {
       // WHEN STOP SCROLLING, SHOW THE PROJECT DESCRIPTION with stagger and opacity back to 1
-      const index = content[this.currentPlane].id.toString().padStart(2, "0");
-      const name = content[this.currentPlane].name;
-      const location = content[this.currentPlane].location;
+      const index = this.data[this.currentPlane].id.toString().padStart(2, "0");
+      const name = this.data[this.currentPlane].name;
+      const location = this.data[this.currentPlane].location;
       projectIndex.textContent = `[${index}]`;
       projectName.textContent = name;
       projectLocation.textContent = location;
@@ -485,14 +581,12 @@ class Scene {
     let that = this;
 
     barba.init({
-      debug: true,
       transitions: [
         {
           name: "from-home-page-transition",
           from: {
             namespace: ["home"],
           },
-          beforeLeave(data) {},
           leave(data) {
             // LEAVING HOME
             const tl = gsap.timeline();
@@ -534,7 +628,6 @@ class Scene {
               ease: Power3.easeInOut,
             });
           },
-          afterEnter(data) {},
         },
       ],
     });
@@ -542,7 +635,7 @@ class Scene {
 }
 
 // Create an instance of the Scene class
-const scene = new Scene();
+new Scene(content);
 
 // Export the Scene class if needed
 export default Scene;
