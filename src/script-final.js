@@ -126,7 +126,6 @@ class Scene {
 
     // Resize event
     this.handleResize = this.handleResize.bind(this);
-    window.addEventListener("resize", this.handleResize);
 
     // Init
     this.handleSettings();
@@ -134,7 +133,6 @@ class Scene {
     this.handleEventListeners();
     this.animate();
     this.introAnim();
-    this.handleWording();
     this.barba();
   }
 
@@ -242,6 +240,8 @@ class Scene {
   }
 
   handleEventListeners() {
+    window.addEventListener("resize", this.handleResize);
+
     // ============ Scroll ============
     const handleMouseWheel = (event) => {
       this.scrollTarget = event.wheelDeltaY * 0.3;
@@ -518,12 +518,12 @@ class Scene {
           leave(data) {
             // LEAVING PROJECT PAGE
             const tl = gsap.timeline();
-            that.onHome = true;
             return tl.to(data.current.container, {
               x: "-100%",
             });
           },
           beforeEnter(data) {
+            that.onHome = true;
             that.init();
             data.next.container.style.transform = "translateX(100%)";
           },
