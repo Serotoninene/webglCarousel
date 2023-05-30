@@ -78,6 +78,7 @@ class Scene {
     this.currentPlane = 0;
     this.wholeWidth = this.n * this.margin;
     this.positionY = 0;
+    this.onHome = true;
 
     // Events
     this.scrollTarget = 0;
@@ -197,6 +198,7 @@ class Scene {
       this.meshes.push(mesh);
       this.scene.add(mesh);
     }
+    return this.meshes;
   }
 
   handleRaycaster() {
@@ -386,6 +388,7 @@ class Scene {
   }
 
   handleWording() {
+    if (!this.onHome) return;
     const projectIndex = document.querySelector(".project-index span");
     const projectName = document.querySelector(".project-name");
     const projectLocation = document.querySelector(".project-location");
@@ -459,7 +462,7 @@ class Scene {
     this.material = [];
   }
 
-  barba() {
+  async barba() {
     let that = this;
 
     barba.init({
@@ -482,6 +485,7 @@ class Scene {
           },
           afterLeave(data) {
             that.cleanUp();
+            that.onHome = false;
           },
           beforeEnter(data) {
             const img = data.next.container.querySelector(".image img");
@@ -498,15 +502,15 @@ class Scene {
           leave(data) {
             // LEAVING PROJECT PAGE
             const tl = gsap.timeline();
-            return tl.to(data.current.container, {
+            that.onHome = true;
+            tl.to(data.current.container, {
               x: "-100%",
             });
           },
-          beforeEnter(data) {},
           async enter(data) {
             that.handleSettings();
             await that.addObjects();
-            that.animate();
+            that.handleResize();
           },
           afterEnter(data) {},
         },

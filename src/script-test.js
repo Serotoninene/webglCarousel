@@ -1,14 +1,10 @@
 import * as THREE from "three";
-import testVertexShader from "./shaders/picture/vertex.glsl";
-import testFragmentShader from "./shaders/picture/fragment.glsl";
 import gsap, { Power2, Power3 } from "gsap";
-import Stats from "stats-js";
+import vertexShader from "./shaders/picture/vertex.glsl";
+import fragmentShader from "./shaders/picture/fragment.glsl";
+import barba from "@barba/core";
+import { insideAnim } from "./inside";
 
-const stats = new Stats();
-// stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-// document.body.appendChild(stats.dom);
-
-// ----------------- CONTENT -----------------  //
 const content = [
   {
     id: 1,
@@ -66,471 +62,426 @@ const content = [
   },
 ];
 
-const texturesToLoad = [
-  "/textures/texture3.jpg",
-  "/textures/texture2.jpg",
-  "/textures/texture1.jpg",
-  "/textures/texture4.jpg",
-  "/textures/texture5.jpg",
-  "/textures/texture6.jpg",
-  "/textures/texture7.jpg",
-  "/textures/texture8.jpg",
-  "/textures/texture9.jpg",
-];
+class Scene {
+  constructor() {
+    this.settings = {
+      lerpY: 0.324,
+      progress: 0,
+      meshWidth: 1.4,
+      meshHeight: 2.2,
+      snapDelta: 0.717,
+    };
 
-// ----------------- THREEJS PART -----------------  //
+    // Params
+    this.n = 8;
+    this.margin = 3.5;
+    this.currentPlane = 0;
+    this.wholeWidth = this.n * this.margin;
+    this.positionY = 0;
+    this.onHome = true;
 
-// ----------------- GUI -----------------  //
-let settings = {
-  lerpY: 0.324,
-  progress: 1,
-  meshWidth: 1.4,
-  meshHeight: 2.2,
-  snapDelta: 0.717,
-};
-// const gui = new GUI();
-// gui.add(settings, "lerpY", 0, 1, 0.001);
-// gui.add(settings, "snapDelta", 0, 1, 0.001);
-// gui.add(settings, "meshWidth", 0, 5, 0.1);
-// gui.add(settings, "meshHeight", 0, 5, 0.1);
+    // Events
+    this.scrollTarget = 0;
+    this.scrollSpead = 0;
+    this.currentScroll = 0;
+    this.touchStart = 0;
+    this.touchEnd = 0;
+    this.isInMotion = false;
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
+    this.currentIntersect = null;
 
-/**
- * Base
- */
-// Canvas
-const canvas = document.querySelector("canvas.webgl");
+    // Setting up the threejs scene
+    this.scene = new THREE.Scene();
+    this.meshes = [];
+    this.material = [];
+    this.canvas = document.querySelector("canvas.webgl");
+    this.sizes = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      canvasWidth: this.canvas?.clientWidth,
+      canvasHeight: this.canvas?.clientHeight,
+    };
+    this.camera = new THREE.PerspectiveCamera(
+      35,
+      this.sizes.canvasWidth / this.sizes.canvasHeight,
+      0.1,
+      100
+    );
+    this.camera.position.z = 60;
+    this.camera.aspect = this.sizes.canvasWidth / this.sizes.canvasHeight;
 
-/**
- * Setting up values
- */
-let sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight,
-};
+    this.ndcHeight =
+      2 *
+      this.camera.position.z *
+      Math.tan((this.camera.fov / 2) * (Math.PI / 180));
+    this.ndcWidth = this.ndcHeight * this.camera.aspect;
 
-let ndcWidth;
-let ndcHeight;
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
+      alpha: true,
+    });
+    this.renderer.setSize(this.sizes.canvasWidth, this.sizes.canvasHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-const canvasSizes = {
-  width: canvas.clientWidth,
-  height: canvas.clientHeight,
-};
+    // Resize event
+    this.handleResize = this.handleResize.bind(this);
+    window.addEventListener("resize", this.handleResize);
 
-let meshWidth;
-let meshHeight;
+    this.handleMouseWheel = this.handleMouseWheel.bind(this);
+    this.handleTouchStart = this.handleTouchStart.bind(this);
+    this.handleTouchMove = this.handleTouchMove.bind(this);
+    this.handleTouchEnd = this.handleTouchEnd.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.handleClick = this.handleClick.bind(this);
 
-let margin = 3.5;
+    // Init
+    this.handleSettings();
+    this.addObjects();
+    this.handleEventListeners();
+    this.animate();
 
-const whereUComongFrom = 8;
-let wholeWidth = whereUComongFrom * margin;
-
-let currentPlane = 0;
-let meshes = [];
-let material = [];
-
-if (sizes.width < 768) {
-  meshWidth = settings.meshWidth;
-  meshHeight = settings.meshHeight;
-  margin = 1.8;
-  wholeWidth = whereUComongFrom * margin;
-} else {
-  meshWidth = 2.4;
-  meshHeight = 2.4;
-  margin = 3.5;
-  wholeWidth = whereUComongFrom * margin;
-}
-
-// Scene
-const scene = new THREE.Scene();
-
-/**
- * Objects
- */
-// Texture
-const textureLoader = new THREE.TextureLoader();
-const texture = textureLoader.load("/textures/texture1.jpg");
-
-const texturePromises = texturesToLoad.map(
-  (textureToLoad) =>
-    new Promise((resolve) => {
-      textureLoader.load(textureToLoad, (texture) => {
-        resolve(texture);
-      });
-    })
-);
-
-/**
- * Handling resize
- */
-
-const handleResize = () => {
-  const widthRatio = canvasSizes.width / sizes.width;
-  const heightRatio = canvasSizes.height / sizes.height;
-
-  // Update sizes
-  sizes.width = window.innerWidth;
-  sizes.height = window.innerHeight;
-
-  canvasSizes.width = sizes.width * widthRatio;
-  canvasSizes.height = sizes.height * heightRatio;
-
-  // Update camera
-  camera.aspect = canvasSizes.width / canvasSizes.height;
-  camera.updateProjectionMatrix();
-
-  let aspect = canvasSizes.width / canvasSizes.height;
-
-  // update ndcWidth and ndcHeight
-  ndcHeight =
-    2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-  ndcWidth = ndcHeight * aspect;
-
-  if (sizes.width < 768) {
-    meshWidth = settings.meshWidth;
-    meshHeight = settings.meshHeight;
-    margin = 1.8;
-    wholeWidth = whereUComongFrom * margin;
-  } else {
-    meshWidth = 2.4;
-    meshHeight = 2.4;
-    margin = 3.5;
-    wholeWidth = whereUComongFrom * margin;
+    this.barba();
   }
 
-  meshes.forEach((mesh, i) => {
-    mesh.position.x = i * margin;
-    mesh.material.uniforms.uResolution.value = new THREE.Vector2(
-      ndcWidth,
-      ndcHeight
-    );
-  });
+  handleSettings() {}
 
-  // Update renderer
-  renderer.setSize(canvasSizes.width, canvasSizes.height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-};
-
-window.addEventListener("resize", handleResize);
-
-/**
- * Camera
- */
-// Base camera
-const camera = new THREE.PerspectiveCamera(
-  35,
-  canvasSizes.width / canvasSizes.height,
-  0.1,
-  100
-);
-
-camera.position.z = 6;
-
-let aspect = canvasSizes.width / canvasSizes.height;
-
-ndcHeight =
-  2 * camera.position.z * Math.tan((camera.fov / 2) * (Math.PI / 180));
-ndcWidth = ndcHeight * aspect;
-
-let uResolution = new THREE.Vector2(ndcWidth, ndcHeight);
-
-const setUpObjects = () => {
-  for (let i = 0; i < whereUComongFrom; i++) {
-    material[i] = new THREE.ShaderMaterial({
+  addObjects() {
+    this.material = new THREE.ShaderMaterial({
       uniforms: {
-        uIndex: { value: i },
         uScrollY: { value: 0.0 },
-        uTime: { value: 0.0 },
         uProgress: { value: 0.0 },
-        uDistanceFromCenter: { value: 0.0 },
-        uCorners: { value: new THREE.Vector4(0, 0, 0, 0) },
         uResolution: {
-          value: uResolution,
+          value: new THREE.Vector2(this.ndcWidth, this.ndcHeight),
         },
-        uQuadSize: { value: new THREE.Vector2(meshWidth, meshHeight) },
-        uTextureSize: { value: new THREE.Vector2(0, 0) },
-        uTexture: { value: texture },
+        uQuadSize: {
+          value: new THREE.Vector2(
+            this.settings.meshWidth,
+            this.settings.meshHeight
+          ),
+        },
+
         uValue: { value: 0 },
       },
-      vertexShader: testVertexShader,
-      fragmentShader: testFragmentShader,
-      // wireframe: true,
-    });
-
-    Promise.all(texturePromises).then((textures) => {
-      material[i].uniforms.uTexture.value = textures[i];
-
-      material[i].uniforms.uTextureSize.value = new THREE.Vector2(
-        textures[i].image.width,
-        textures[i].image.height
-      );
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
     });
 
     const mesh = new THREE.Mesh(
       new THREE.PlaneGeometry(1, 1, 32, 32),
-      material[i]
+      new THREE.MeshBasicMaterial({
+        color: 0x000000,
+      })
     );
-    if (sizes.width < 768) {
-      mesh.position.y = 5;
+
+    if (this.sizes.width < 768) {
+      mesh.position.y = 0.2;
     } else {
       mesh.position.y = 0.1;
     }
-    mesh.position.x = i * margin;
-    mesh.scale.set(meshWidth, meshHeight, 1);
+    mesh.position.x = this.margin;
 
-    meshes.push(mesh);
-    scene.add(mesh);
+    mesh.scale.set(this.settings.meshWidth, this.settings.meshHeight, 1);
+    this.meshes.push(mesh);
+    this.scene.add(mesh);
+
+    return this.meshes;
   }
-};
 
-setUpObjects();
-//  ============ Objects ============
-
-/**
- * Renderer
- */
-const renderer = new THREE.WebGLRenderer({
-  canvas: canvas,
-  alpha: true,
-});
-renderer.setSize(canvasSizes.width, canvasSizes.height);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-/**
- * Scroll
- */
-let scrollTarget = 0;
-let scrollSpead = 0;
-let currentScroll = 0;
-let isInMotion = false;
-
-const handleMouseWheel = (event) => {
-  scrollTarget = event.wheelDeltaY * 0.3;
-};
-
-// ============ Scroll ============
-window.addEventListener("mousewheel", handleMouseWheel);
-
-// ============ Touch ============
-let touchStart = 0;
-let touchEnd = 0;
-
-const handleTouchStart = (event) => {
-  touchStart = event.touches[0].clientX;
-};
-
-window.addEventListener("touchstart", handleTouchStart);
-
-const handleTouchMove = (e) => {
-  touchEnd = e.touches[0].clientX;
-  scrollTarget = (touchEnd - touchStart) * 0.175;
-};
-
-window.addEventListener("touchmove", handleTouchMove);
-
-const handleTouchEnd = (event) => {
-  touchStart = 0;
-  touchEnd = 0;
-};
-
-window.addEventListener("touchend", handleTouchEnd);
-
-/**
- * Mouse postion
- */
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-const handleMouseMove = (event) => {
-  mouse.x = (event.clientX / canvasSizes.width) * 2 - 1;
-  mouse.y = -(event.clientY / canvasSizes.height) * 2 + 1;
-};
-
-window.addEventListener("mousemove", handleMouseMove);
-
-const handleClick = () => {
-  if (currentIntersect) {
-    const { x } = currentIntersect.object.position;
-    if (Math.abs(x) >= 0.05) {
-      // if the user click on a plane on the left/right side -> centers it
-      scrollTarget =
-        sizes.width > 1600 ? 0 : -1 * (((x * ndcWidth * 2) / margin) * 10);
-      // take into account the size of the screen
-      scrollTarget *= 0.8;
-    } else {
-      // if the user click on a plane on the center -> open the project
-      if (settings.progress === 0) {
-        // if the user click on a plane on the center -> open the project
-        gsap.to(settings, {
-          progress: 1,
-          duration: 0.8,
-          ease: Power3.easeInOut,
-        });
-      } else {
-        gsap.to(settings, {
-          progress: 0,
-          duration: 0.8,
-          ease: Power3.easeInOut,
-        });
-      }
-    }
-  }
-};
-
-/**
- * Mouse click
- */
-window.addEventListener("click", handleClick);
-
-/**
- * Animate
- */
-const clock = new THREE.Clock();
-let currentIntersect = null;
-
-const updateMeshes = () => {
-  meshes.forEach((o, i) => {
-    if (sizes.width < 768) {
-      o.scale.x = settings.meshWidth;
-      o.scale.y = settings.meshHeight;
-    } else {
-      o.scale.x = 2.4;
-      o.scale.y = 2.4;
-    }
-    // ======== scroll effect ========
-    o.position.x += currentScroll * 0.01;
-    // If the mesh goes out of bounds on the left side, move it to the right
-    if (o.position.x < -wholeWidth / 2) o.position.x += wholeWidth;
-    // // If the mesh goes out of bounds on the right side, move it to the left
-    if (o.position.x > wholeWidth / 2) o.position.x -= wholeWidth;
-
-    // ======== snapping effect ========
-    let rounded = Math.round(o.position.x / margin) * margin;
-    let diff = rounded - o.position.x;
-    o.position.x += THREE.MathUtils.lerp(
-      0,
-      Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.04,
-      settings.snapDelta
-    );
-
-    // ======== rotation effect ========
-    o.rotation.z = o.position.x * -0.1;
-
-    // ======== position Y in function of distance from center effect ========
-    o.position.y += THREE.MathUtils.lerp(
-      o.position.y,
-      Math.abs(Math.sin(o.position.x * 0.5)) * -1,
-      settings.lerpY
-    );
-    if (sizes.width < 768) {
-      o.position.y *= 0.35;
-    } else {
-      o.position.y *= 0.5;
+  handleRaycaster() {
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const intersects = this.raycaster.intersectObjects(this.meshes);
+    // when nothing is hovered, back to basics
+    document.body.style.cursor = "auto";
+    for (const mesh of this.meshes) {
+      // gsap.to(mesh.material.uniforms.uValue, {
+      //   value: 0,
+      //   duration: 0.4,
+      // });
     }
 
-    // define the index of the currentPlane in the center
-    if (rounded === 0) {
-      currentPlane = i;
-    }
-
-    // define if the user is currently scrolling or no
-    if (Math.abs(diff) <= 0.002) {
-      isInMotion = false;
-    } else {
-      isInMotion = true;
-    }
-
-    // RayCaster and moseEvents
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(meshes);
-
-    for (let i = 0; i < whereUComongFrom; i++) {
-      gsap.to(meshes[i].material.uniforms.uValue, {
-        value: 0,
-        duration: 0.4,
-      });
-    }
-
+    // when a mesh is hovered
     if (intersects.length) {
       document.body.style.cursor = "pointer";
-      currentIntersect = intersects[0];
-      if (sizes.width > 768) {
-        gsap.to(currentIntersect.object.material.uniforms.uValue, {
-          value: 2,
-        });
+      this.currentIntersect = intersects[0];
+      if (this.sizes.width > 768) {
+        // gsap.to(this.currentIntersect.object.material.uniforms.uValue, {
+        //   value: 2,
+        // });
       }
     }
-  });
+  }
 
-  handlingGSAP();
-};
+  // EVENT LISTENER FUNCTIONs
+  handleMouseWheel(event) {
+    this.scrollTarget = event.wheelDeltaY * 0.3;
+  }
+  handleTouchStart(event) {
+    this.touchStart = event.touches[0].clientX;
+  }
+  handleTouchMove() {
+    this.touchEnd = e.touches[0].clientX;
+    this.scrollTarget = (this.touchEnd - this.touchStart) * 0.175;
+  }
+  handleTouchEnd() {
+    this.touchStart = 0;
+    this.touchEnd = 0;
+  }
+  handleMouseMove(event) {
+    this.mouse.x = (event.clientX / this.sizes?.canvasWidth) * 2 - 1;
+    this.mouse.y = -(event.clientY / this.sizes?.canvasHeight) * 2 + 1;
+  }
 
-const tick = () => {
-  stats.begin();
-  const elapsedTime = clock.getElapsedTime();
-
-  scrollSpead += (scrollTarget - scrollSpead) * 0.5;
-  scrollSpead *= 0.9;
-  scrollTarget *= 0.9;
-  currentScroll = scrollSpead * 0.5;
-
-  updateMeshes();
-
-  // Update uniforms
-  meshes.forEach((_, i) => {
-    material[i].uniforms.uScrollY.value = scrollTarget / canvasSizes.height;
-    material[i].uniforms.uQuadSize.value = new THREE.Vector2(
-      sizes.width < 768 ? settings.meshWidth : 2.4,
-      sizes.width < 768 ? settings.meshHeight : 2.4
-    );
-
-    if (i === currentPlane) {
-      material[i].uniforms.uProgress.value = settings.progress;
-      // _.position.z = 0.1;
-    } else {
-      // _.position.y += settings.progress * -10;
+  handleClick() {
+    if (this.currentIntersect) {
+      const { x } = this.currentIntersect.object.position;
+      if (Math.abs(x) >= 0.05) {
+        // if the user click on a plane on the left/right side -> centers it
+        this.scrollTarget =
+          this.sizes.width > 1600
+            ? 0
+            : -1 * (((x * this.ndcWidth * 2) / this.margin) * 10);
+        // take into account the size of the screen
+        this.scrollTarget *= 0.8;
+      } else {
+        // if the user click on a plane on the center -> open the project
+        if (this.settings.progress === 0) {
+          // if the user click on a plane on the center -> open the project
+          gsap.to(this.settings, {
+            progress: 1,
+            duration: 0.8,
+            ease: Power3.easeInOut,
+          });
+        } else {
+          gsap.to(this.settings, {
+            progress: 0,
+            duration: 0.8,
+            ease: Power3.easeInOut,
+          });
+        }
+      }
     }
-  });
+  }
 
-  // Render
-  renderer.render(scene, camera);
-  stats.end();
+  handleEventListeners() {
+    // ============ Scroll ============
+    window.addEventListener("mousewheel", this.handleMouseWheel);
 
-  // Call tick again on the next frame
-  window.requestAnimationFrame(tick);
-};
+    // ============ Touch ============
+    window.addEventListener("touchstart", this.handleTouchStart);
 
-tick();
+    window.addEventListener("touchmove", this.handleTouchMove);
 
-// ----------------- GSAP PART -----------------  //
+    window.addEventListener("touchend", this.handleTouchEnd);
 
-// ============== INTRO ANIMATION ==============
-const introTl = gsap.timeline();
-introTl.to(".body", { y: 0, duration: 0.8, ease: Power2.easeInOut }, 1);
-introTl.to(settings, { progress: 0, duration: 1, ease: Power3.easeInOut });
+    // ============ Mouse ============
+    window.addEventListener("mousemove", this.handleMouseMove);
+    window.addEventListener("click", this.handleClick);
+  }
 
-// when isInMotion === true, project description
-function handlingGSAP() {
-  const projectIndex = document.querySelector(".project-index span");
-  const projectName = document.querySelector(".project-name");
-  const projectLocation = document.querySelector(".project-location");
-  const array = [projectIndex, projectName, projectLocation];
-  // ============== WORDING ANIMATION ==============
-  // if the user is scrolling, hide the project description
-  if (isInMotion) {
-    gsap.to(array, {
-      stagger: 0.1,
-      opacity: 0,
+  handleResize() {
+    this.handleSettings();
+    const widthRatio = this.sizes.canvasWidth / this.sizes.width;
+    const heightRatio = this.sizes.canvasHeight / this.sizes.height;
+
+    this.sizes.width = window.innerWidth;
+    this.sizes.height = window.innerHeight;
+
+    this.sizes.canvasWidth = this.sizes.width * widthRatio;
+    this.sizes.canvasHeight = this.sizes.height * heightRatio;
+
+    this.camera.aspect = this.sizes.canvasWidth / this.sizes.canvasHeight;
+    this.camera.updateProjectionMatrix();
+
+    this.ndcHeight =
+      2 *
+      this.camera.position.z *
+      Math.tan((this.camera.fov / 2) * (Math.PI / 180));
+    this.ndcWidth = this.ndcHeight * this.camera.aspect;
+
+    // Handle mesh adjustments and other resizing tasks
+    if (this.sizes.width < 768) {
+      this.settings.meshWidth = 1.4;
+      this.settings.meshHeight = 2.2;
+    } else {
+      this.settings.meshWidth = 2.4;
+      this.settings.height = 2.4;
+    }
+    this.meshes.forEach((mesh, i) => {
+      mesh.scale.set(this.settings.meshWidth, this.settings.meshHeight, 1);
+      mesh.position.x = i * this.margin;
+      mesh.material.uniforms.uQuadSize.value = new THREE.Vector2(
+        this.settings.meshWidth,
+        this.settings.meshHeight
+      );
+      mesh.material.uniforms.uResolution.value = new THREE.Vector2(
+        this.ndcWidth,
+        this.ndcHeight
+      );
     });
-  } else {
-    // WHEN STOP SCROLLING, SHOW THE PROJECT DESCRIPTION with stagger and opacity back to 1
-    const index = content[currentPlane].id.toString().padStart(2, "0");
-    const name = content[currentPlane].name;
-    const location = content[currentPlane].location;
-    projectIndex.textContent = `[${index}]`;
-    projectName.textContent = name;
-    projectLocation.textContent = location;
-    gsap.to(array, {
-      stagger: 0.1,
-      opacity: 1,
+
+    this.renderer.setSize(this.sizes.canvasWidth, this.sizes.canvasHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  }
+
+  handleScroll() {
+    this.scrollSpead += (this.scrollTarget - this.scrollSpead) * 0.5;
+    this.scrollSpead *= 0.9;
+    this.scrollTarget *= 0.9;
+    this.currentScroll = this.scrollSpead * 0.5;
+  }
+
+  handleInfiniteCarousel() {
+    this.meshes.forEach((mesh, i) => {
+      // ======== infinite carousel ========
+      mesh.position.x += this.currentScroll * 0.01;
+      // If the mesh goes out of bounds on the left side, move it to the right
+      if (mesh.position.x < -this.wholeWidth / 2)
+        mesh.position.x += this.wholeWidth;
+      // // If the mesh goes out of bounds on the right side, move it to the left
+      if (mesh.position.x > this.wholeWidth / 2)
+        mesh.position.x -= this.wholeWidth;
+
+      // ======== snapping ========
+      let rounded = Math.round(mesh.position.x / this.margin) * this.margin;
+      let diff = rounded - mesh.position.x;
+      mesh.position.x += THREE.MathUtils.lerp(
+        0,
+        Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.04,
+        this.settings.snapDelta
+      );
+
+      // ======== rotation  ========
+      mesh.rotation.z = mesh.position.x * -0.1;
+
+      // ======== position Y (function of position X) ========
+      mesh.position.y += THREE.MathUtils.lerp(
+        mesh.position.y,
+        Math.abs(Math.sin(mesh.position.x * 0.5)) * -1,
+        this.settings.lerpY
+      );
+      mesh.position.y *= this.positionY;
+
+      // define the index of the currentPlane in the center
+      if (rounded === 0) {
+        this.currentPlane = i;
+      }
+
+      // define if the user is currently scrolling or no
+      if (Math.abs(diff) <= 0.002) {
+        this.isInMotion = false;
+      } else {
+        this.isInMotion = true;
+      }
+    });
+  }
+
+  updateMeshes() {
+    this.meshes.forEach((mesh, i) => {
+      // mesh.material.uniforms.uScrollY.value =
+      //   this.scrollTarget / this.sizes.canvasHeight;
+
+      if (i === this.currentPlane) {
+        // mesh.material.uniforms.uProgress.value = this.settings.progress;
+      } else {
+        // mesh.material.uniforms.uProgress.value = 0;
+        mesh.position.y += this.settings.progress * -10;
+      }
+    });
+  }
+
+  animate() {
+    this.handleScroll();
+    this.handleInfiniteCarousel();
+    this.handleRaycaster();
+    this.updateMeshes();
+    this.renderer.render(this.scene, this.camera);
+    requestAnimationFrame(() => this.animate());
+  }
+
+  cleanUp() {
+    // Clean up tasks
+    window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener("mousewheel", this.handleMouseWheel);
+    window.removeEventListener("touchstart", this.handleTouchStart);
+    window.removeEventListener("touchmove", this.handleTouchMove);
+    window.removeEventListener("touchend", this.handleTouchEnd);
+    window.removeEventListener("mousemove", this.handleMouseMove);
+    window.removeEventListener("click", this.handleClick);
+    window.cancelAnimationFrame(this.animate);
+    this.scrollTarget = 0;
+    this.scrollSpead = 0;
+    this.currentScroll = 0;
+    this.touchStart = 0;
+    this.touchEnd = 0;
+    this.meshes = [];
+    this.material = [];
+    // cancel render loop
+    this.renderer.setAnimationLoop(null);
+  }
+
+  async barba() {
+    let that = this;
+
+    barba.init({
+      debug: true,
+      transitions: [
+        {
+          name: "from-home-page-transition",
+          from: {
+            namespace: ["home"],
+          },
+          beforeLeave(data) {},
+          leave(data) {
+            // LEAVING HOME
+            const tl = gsap.timeline();
+            return tl.to(that.settings, {
+              progress: 1,
+              duration: 0.8,
+              ease: Power3.easeInOut,
+            });
+          },
+          afterLeave(data) {
+            that.cleanUp();
+            that.onHome = false;
+          },
+          beforeEnter(data) {
+            const img = data.next.container.querySelector(".image img");
+          },
+          enter(data) {
+            insideAnim();
+          },
+        },
+        {
+          name: "from-page-to-home",
+          from: {
+            namespace: ["inside"],
+          },
+          leave(data) {
+            // LEAVING PROJECT PAGE
+            const tl = gsap.timeline();
+            that.onHome = true;
+            tl.to(data.current.container, {
+              x: "-100%",
+            });
+          },
+          enter(data) {
+            that.handleSettings();
+            that.addObjects();
+            that.handleEventListeners();
+            console.log(that.scene, that.camera);
+            that.animate();
+            console.log(that.renderer);
+          },
+          afterEnter(data) {},
+        },
+      ],
     });
   }
 }
+
+// Create an instance of the Scene class
+const scene = new Scene();
+
+// Export the Scene class if needed
+export default Scene;
