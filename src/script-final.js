@@ -95,7 +95,7 @@ class Scene {
     this.scene = new THREE.Scene();
     this.meshes = [];
     this.material = [];
-    this.canvas = document.querySelector("canvas.webgl");
+    this.canvas = document.querySelector(".canvasContainer");
     this.sizes = {
       width: window.innerWidth,
       height: window.innerHeight,
@@ -118,9 +118,9 @@ class Scene {
     this.ndcWidth = this.ndcHeight * this.camera.aspect;
 
     this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
       alpha: true,
     });
+    this.canvas.appendChild(this.renderer.domElement);
     this.renderer.setSize(this.sizes.canvasWidth, this.sizes.canvasHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -136,6 +136,22 @@ class Scene {
     this.introAnim();
     this.handleWording();
     this.barba();
+  }
+
+  init() {
+    this.canvas = document.querySelector(".canvasContainer");
+    this.scene = new THREE.Scene();
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.canvas.appendChild(this.renderer.domElement);
+
+    // Init
+    this.handleSettings();
+    this.addObjects();
+    this.handleEventListeners();
+    this.animate();
+    this.introAnim();
   }
 
   handleSettings() {
@@ -460,6 +476,9 @@ class Scene {
     window.cancelAnimationFrame(this.animate);
     this.meshes = [];
     this.material = [];
+    this.scene.remove(this.scene.children);
+    this.scene.remove();
+    this.renderer.dispose();
   }
 
   async barba() {
@@ -487,9 +506,6 @@ class Scene {
             that.cleanUp();
             that.onHome = false;
           },
-          beforeEnter(data) {
-            const img = data.next.container.querySelector(".image img");
-          },
           enter(data) {
             insideAnim();
           },
@@ -503,14 +519,20 @@ class Scene {
             // LEAVING PROJECT PAGE
             const tl = gsap.timeline();
             that.onHome = true;
-            tl.to(data.current.container, {
+            return tl.to(data.current.container, {
               x: "-100%",
             });
           },
-          async enter(data) {
-            that.handleSettings();
-            await that.addObjects();
-            that.handleResize();
+          beforeEnter(data) {
+            that.init();
+            data.next.container.style.transform = "translateX(100%)";
+          },
+          enter(data) {
+            gsap.to(data.next.container, {
+              x: "0%",
+              duration: 0.8,
+              ease: Power3.easeInOut,
+            });
           },
           afterEnter(data) {},
         },
