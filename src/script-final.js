@@ -1,64 +1,39 @@
 import * as THREE from "three";
 import gsap, { Power3 } from "gsap";
 import vertexShader from "./shaders/picture/vertex.glsl";
-import fragmentShader from "./shaders/picture/fragment.glsl";
 import barba from "@barba/core";
 import { insideAnim } from "./inside";
 
 const content = [
   {
     id: 1,
-    name: "Extension d’une maison sur le port",
-    location: "description",
-    image: "/textures/texture1.jpg",
+    h2: "Extension d’une maison sur le port",
+    h3: "description",
+    img: "/textures/texture1.jpg",
   },
   {
     id: 2,
-    name: "Titre 1",
-    location: "description",
-    image: "/textures/texture2.jpg",
+    h2: "Titre 1",
+    h3: "description",
+    img: "/textures/texture2.jpg",
   },
   {
     id: 3,
-    name: "Titre 2",
-    location: "description",
-    image: "/textures/texture3.jpg",
+    h2: "Titre 2",
+    h3: "description",
+    img: "/textures/texture3.jpg",
   },
   {
     id: 4,
-    name: "Titre 3",
-    location: "description",
-    image: "/textures/texture4.jpg",
+    h2: "Titre 3",
+    h3: "description",
+    img: "/textures/texture4.jpg",
   },
   {
     id: 5,
-    name: "Titre 4",
-    location: "description",
-    image: "/textures/texture5.jpg",
-  },
-  {
-    id: 6,
-    name: "Titre 5",
-    location: "description",
-    image: "/textures/texture6.jpg",
-  },
-  {
-    id: 7,
-    name: "Titre 6",
-    location: "description",
-    image: "/textures/texture7.jpg",
-  },
-  {
-    id: 8,
-    name: "Titre 7",
-    location: "description",
-    image: "/textures/texture8.jpg",
-  },
-  {
-    id: 9,
-    name: "Titre 8",
-    location: "description",
-    image: "/textures/texture9.jpg",
+    h2: "Titre 4",
+    h3: "description",
+    img: "/textures/texture5.jpg",
   },
 ];
 
@@ -74,7 +49,7 @@ class Scene {
     };
 
     // Params
-    this.n = 8;
+    this.n = this.data.length;
     this.margin = 3.5;
     this.currentPlane = 0;
     this.wholeWidth = this.n * this.margin;
@@ -173,7 +148,7 @@ class Scene {
     const textureLoader = new THREE.TextureLoader();
 
     for (let i = 0; i < this.n; i++) {
-      const texture = await textureLoader.loadAsync(this.data[i].image);
+      const texture = await textureLoader.loadAsync(this.data[i].img);
       this.material[i] = new THREE.ShaderMaterial({
         uniforms: {
           uScrollY: { value: 0.0 },
@@ -193,71 +168,7 @@ class Scene {
           },
           uValue: { value: 0 },
         },
-        vertexShader: `uniform float uScrollY;
-        uniform float uProgress;
-        uniform float uValue;
-        uniform vec2 uResolution; 
-        uniform vec2 uQuadSize;
-        
-        
-        varying vec2 vUv;
-        varying vec2 vSize;
-        
-        float PI = 3.141592653589793238;
-        
-        // make a circleShape function that takes a radius and returns a float
-        float circleShape(float radius, vec2 position) {
-          float value = distance(position, vec2(0.5));
-          return step(radius,value);
-        }
-        
-        void main()
-        {
-          vUv = uv;
-          vec3 newPosition = position;
-          float sine = sin(PI * uProgress);
-          float waves = sine * 0.1 * sin(5. * length(uv) + 5. * uProgress);
-          vSize = mix(uQuadSize, uResolution, uProgress);
-        
-        // =============================================== HOVER EFFECT ===============================================
-         // Calculate the distance from the vertex to the center
-          vec2 center = vec2(0.0, 0.0);
-          float distance = length(position.xy - center);
-        
-          // Determine the radius for the rounded corners
-          float cornerRadius = 0.5; // Radius in pixels
-          float smoothness = 0.1; // Controls the smoothness of the rounded corners
-          float startTransition = cornerRadius - smoothness;
-          float endTransition = cornerRadius + smoothness;
-          float rounded = smoothstep(startTransition, endTransition, distance);
-        
-        
-          // =================== ROUNDED SHAPE ===================
-          newPosition.xy = mix(position.xy, normalize(position.xy + vec2(0.00001)) * cornerRadius, rounded);
-          newPosition.xy = mix(newPosition.xy, position.xy, step(0.0, position.x) * step(position.y, 0.0));
-        
-          // do the transition, using uValue between the position and the newPOsition
-          vec4 mixedPosition = mix(vec4(position, 1.0), vec4(newPosition, 1.0), uValue);
-        // =============================================== END OF HOVER EFFECT ===============================================
-        
-        // =============================================== FULLSCREEN EFFECT ===============================================
-          vec4 modelPosition = modelMatrix * mixedPosition;
-          vec4 fullScreenState = vec4(position, 1.0);
-        
-          fullScreenState.x *=  uResolution.x;
-          fullScreenState.y *=  uResolution.y;
-        
-          modelPosition.z += sin(modelPosition.x * 1.0) * 5. * uScrollY;
-        // =============================================== HALF OF SCREEN EFFECT ===============================================
-        
-          vec4 mixedState = mix(modelPosition, fullScreenState, uProgress + waves  );
-        
-        
-          vec4 viewPosition = viewMatrix * mixedState;
-          vec4 projectedPosition = projectionMatrix * viewPosition;
-          
-          gl_Position = projectedPosition;  
-        }`,
+        vertexShader: vertexShader,
         fragmentShader: `precision highp float;
         uniform vec2 uTextureSize;
         uniform sampler2D uTexture;
@@ -297,12 +208,8 @@ class Scene {
         this.material[i]
       );
 
-      if (this.sizes.width < 768) {
-        mesh.position.y = 0.2;
-      } else {
-        mesh.position.y = 0.1;
-      }
       mesh.position.x = i * this.margin;
+      mesh.position.y = 2;
 
       mesh.scale.set(this.settings.meshWidth, this.settings.meshHeight, 1);
       this.meshes.push(mesh);
@@ -342,32 +249,32 @@ class Scene {
     const handleMouseWheel = (event) => {
       this.scrollTarget = event.wheelDeltaY * 0.3;
     };
-    window.addEventListener("mousewheel", handleMouseWheel);
+    document.addEventListener("mousewheel", handleMouseWheel);
 
     // ============ Touch ============
     const handleTouchStart = (event) => {
       this.touchStart = event.touches[0].clientX;
     };
-    window.addEventListener("touchstart", handleTouchStart);
+    document.addEventListener("touchstart", handleTouchStart);
 
     const handleTouchMove = (e) => {
       this.touchEnd = e.touches[0].clientX;
-      this.scrollTarget = (this.touchEnd - this.touchStart) * 0.175;
+      this.scrollTarget = (this.touchEnd - this.touchStart) * 0.3;
     };
-    window.addEventListener("touchmove", handleTouchMove);
+    document.addEventListener("touchmove", handleTouchMove);
 
     const handleTouchEnd = (event) => {
       this.touchStart = 0;
       this.touchEnd = 0;
     };
-    window.addEventListener("touchend", handleTouchEnd);
+    document.addEventListener("touchend", handleTouchEnd);
 
     // ============ Mouse ============
     const handleMouseMove = (event) => {
       this.mouse.x = (event.clientX / this.sizes.canvasWidth) * 2 - 1;
       this.mouse.y = -(event.clientY / this.sizes.canvasHeight) * 2 + 1;
     };
-    window.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mousemove", handleMouseMove);
 
     const handleClick = () => {
       if (this.currentIntersect) {
@@ -478,11 +385,8 @@ class Scene {
       mesh.rotation.z = mesh.position.x * -0.1;
 
       // ======== position Y (function of position X) ========
-      mesh.position.y += THREE.MathUtils.lerp(
-        mesh.position.y,
-        Math.abs(Math.sin(mesh.position.x * 0.5)) * -1,
-        this.settings.lerpY
-      );
+      mesh.position.y += this.sizes.width > 768 ? 0.1 : 0;
+      mesh.position.y += Math.abs(Math.sin(mesh.position.x * 0.5)) * -1;
       mesh.position.y *= this.positionY;
 
       // define the index of the currentPlane in the center
@@ -501,7 +405,7 @@ class Scene {
 
   handleWording() {
     if (!this.onHome) return;
-    const projectIndex = document.querySelector(".project-index span");
+    const projectIndex = document.querySelector(".project-index");
     const projectName = document.querySelector(".project-name");
     const projectLocation = document.querySelector(".project-location");
     const array = [projectIndex, projectName, projectLocation];
@@ -515,8 +419,8 @@ class Scene {
     } else {
       // WHEN STOP SCROLLING, SHOW THE PROJECT DESCRIPTION with stagger and opacity back to 1
       const index = this.data[this.currentPlane].id.toString().padStart(2, "0");
-      const name = this.data[this.currentPlane].name;
-      const location = this.data[this.currentPlane].location;
+      const name = this.data[this.currentPlane].h2;
+      const location = this.data[this.currentPlane].h3;
       projectIndex.textContent = `[${index}]`;
       projectName.textContent = name;
       projectLocation.textContent = location;
@@ -575,62 +479,6 @@ class Scene {
     this.scene.remove(this.scene.children);
     this.scene.remove();
     this.renderer.dispose();
-  }
-
-  async barba() {
-    let that = this;
-
-    barba.init({
-      transitions: [
-        {
-          name: "from-home-page-transition",
-          from: {
-            namespace: ["home"],
-          },
-          leave(data) {
-            // LEAVING HOME
-            const tl = gsap.timeline();
-            return tl.to(that.settings, {
-              progress: 1,
-              duration: 0.8,
-              ease: Power3.easeInOut,
-            });
-          },
-          afterLeave(data) {
-            that.cleanUp();
-            that.onHome = false;
-          },
-          enter(data) {
-            insideAnim();
-          },
-        },
-        {
-          name: "from-page-to-home",
-          from: {
-            namespace: ["inside"],
-          },
-          leave(data) {
-            // LEAVING PROJECT PAGE
-            const tl = gsap.timeline();
-            return tl.to(data.current.container, {
-              x: "-100%",
-            });
-          },
-          beforeEnter(data) {
-            that.onHome = true;
-            that.init();
-            data.next.container.style.transform = "translateX(100%)";
-          },
-          enter(data) {
-            gsap.to(data.next.container, {
-              x: "0%",
-              duration: 0.8,
-              ease: Power3.easeInOut,
-            });
-          },
-        },
-      ],
-    });
   }
 }
 

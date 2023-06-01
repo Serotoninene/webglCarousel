@@ -21,7 +21,11 @@ void main()
   vUv = uv;
   vec3 newPosition = position;
   float sine = sin(PI * uProgress);
-  float waves = sine * 0.1 * sin(5. * length(uv) + 5. * uProgress);
+  float distortion = 0.1;
+  float numberofWaves = 5.0;
+  float waveLength = 2.;
+
+  float waves = sine * distortion * sin(numberofWaves * length(uv) + waveLength * uProgress);
   vSize = mix(uQuadSize, uResolution, uProgress);
 
 // =============================================== HOVER EFFECT ===============================================
@@ -55,7 +59,7 @@ void main()
   modelPosition.z += sin(modelPosition.x * 1.0) * 5. * uScrollY;
 // =============================================== HALF OF SCREEN EFFECT ===============================================
 
-  vec4 mixedState = mix(modelPosition, fullScreenState, uProgress + waves  );
+  vec4 mixedState = mix(modelPosition, fullScreenState, uProgress + waves);
 
 
   vec4 viewPosition = viewMatrix * mixedState;

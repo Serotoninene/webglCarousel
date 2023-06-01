@@ -1,7 +1,5 @@
 import * as THREE from "three";
 import gsap, { Power3 } from "gsap";
-import vertexShader from "./shaders/picture/vertex.glsl";
-import fragmentShader from "./shaders/picture/fragment.glsl";
 import barba from "@barba/core";
 import { insideAnim } from "./inside";
 
@@ -74,7 +72,7 @@ class Scene {
     };
 
     // Params
-    this.n = 8;
+    this.n = this.data.length;
     this.margin = 3.5;
     this.currentPlane = 0;
     this.wholeWidth = this.n * this.margin;
@@ -325,38 +323,38 @@ class Scene {
   }
 
   handleEventListeners() {
-    window.addEventListener("resize", this.handleResize);
+    document.addEventListener("resize", this.handleResize);
 
     // ============ Scroll ============
     const handleMouseWheel = (event) => {
       this.scrollTarget = event.wheelDeltaY * 0.3;
     };
-    window.addEventListener("mousewheel", handleMouseWheel);
+    document.addEventListener("mousewheel", handleMouseWheel);
 
     // ============ Touch ============
     const handleTouchStart = (event) => {
       this.touchStart = event.touches[0].clientX;
     };
-    window.addEventListener("touchstart", handleTouchStart);
+    document.addEventListener("touchstart", handleTouchStart);
 
     const handleTouchMove = (e) => {
       this.touchEnd = e.touches[0].clientX;
       this.scrollTarget = (this.touchEnd - this.touchStart) * 0.175;
     };
-    window.addEventListener("touchmove", handleTouchMove);
+    document.addEventListener("touchmove", handleTouchMove);
 
     const handleTouchEnd = (event) => {
       this.touchStart = 0;
       this.touchEnd = 0;
     };
-    window.addEventListener("touchend", handleTouchEnd);
+    document.addEventListener("touchend", handleTouchEnd);
 
     // ============ Mouse ============
     const handleMouseMove = (event) => {
       this.mouse.x = (event.clientX / this.sizes.canvasWidth) * 2 - 1;
       this.mouse.y = -(event.clientY / this.sizes.canvasHeight) * 2 + 1;
     };
-    window.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mousemove", handleMouseMove);
 
     const handleClick = () => {
       if (this.currentIntersect) {
@@ -504,8 +502,8 @@ class Scene {
     } else {
       // WHEN STOP SCROLLING, SHOW THE PROJECT DESCRIPTION with stagger and opacity back to 1
       const index = this.data[this.currentPlane].id.toString().padStart(2, "0");
-      const name = this.data[this.currentPlane].name;
-      const location = this.data[this.currentPlane].location;
+      const name = this.data[this.currentPlane].h2;
+      const location = this.data[this.currentPlane].h3;
       projectIndex.textContent = `[${index}]`;
       projectName.textContent = name;
       projectLocation.textContent = location;
