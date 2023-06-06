@@ -108,8 +108,8 @@ class Scene {
     this.addObjects();
     this.handleEventListeners();
     this.animate();
+    this.barbaInit();
     this.introAnim();
-    this.barba();
   }
 
   async init() {
@@ -386,7 +386,7 @@ class Scene {
 
       // ======== position Y (function of position X) ========
       mesh.position.y += this.sizes.width > 768 ? 0.1 : 0;
-      mesh.position.y += Math.abs(Math.sin(mesh.position.x * 0.5)) * -1;
+      mesh.position.y += Math.abs(mesh.position.x * 0.5) * -1;
       mesh.position.y *= this.positionY;
 
       // define the index of the currentPlane in the center
@@ -480,6 +480,118 @@ class Scene {
     this.scene.remove();
     this.renderer.dispose();
   }
+
+  barbaInit() {
+    let that = this;
+
+    barba.init({
+      transitions: [
+        {
+          name: "from-home-page-transition",
+          from: {
+            namespace: ["home"],
+          },
+          leave(data) {
+            // LEAVING HOME
+            const tl = gsap.timeline();
+            return tl.to(that.settings, {
+              progress: 1,
+              duration: 0.8,
+              ease: Power3.easeInOut,
+            });
+          },
+          afterLeave(data) {
+            that.cleanUp();
+            that.onHome = false;
+          },
+          enter(data) {
+            insideAnim();
+          },
+        },
+        {
+          name: "from-page-to-home",
+          from: {
+            namespace: ["inside"],
+          },
+          leave(data) {
+            // LEAVING PROJECT PAGE
+            const tl = gsap.timeline();
+            return tl.to(data.current.container, {
+              x: "-100%",
+            });
+          },
+          beforeEnter(data) {
+            that.onHome = true;
+            that.init();
+            data.next.container.style.transform = "translateX(100%)";
+          },
+          enter(data) {
+            gsap.to(data.next.container, {
+              x: "0%",
+              duration: 0.8,
+              ease: Power3.easeInOut,
+            });
+          },
+        },
+      ],
+    });
+  }
+}
+
+async function barbaInit() {
+  let that = this;
+
+  barba.init({
+    transitions: [
+      {
+        name: "from-home-page-transition",
+        from: {
+          namespace: ["home"],
+        },
+        leave(data) {
+          // LEAVING HOME
+          const tl = gsap.timeline();
+          return tl.to(that.settings, {
+            progress: 1,
+            duration: 0.8,
+            ease: Power3.easeInOut,
+          });
+        },
+        afterLeave(data) {
+          that.cleanUp();
+          that.onHome = false;
+        },
+        enter(data) {
+          insideAnim();
+        },
+      },
+      {
+        name: "from-page-to-home",
+        from: {
+          namespace: ["inside"],
+        },
+        leave(data) {
+          // LEAVING PROJECT PAGE
+          const tl = gsap.timeline();
+          return tl.to(data.current.container, {
+            x: "-100%",
+          });
+        },
+        beforeEnter(data) {
+          that.onHome = true;
+          that.init();
+          data.next.container.style.transform = "translateX(100%)";
+        },
+        enter(data) {
+          gsap.to(data.next.container, {
+            x: "0%",
+            duration: 0.8,
+            ease: Power3.easeInOut,
+          });
+        },
+      },
+    ],
+  });
 }
 
 // Create an instance of the Scene class
