@@ -21,8 +21,8 @@ void main()
   vUv = uv;
   vec3 newPosition = position;
   float sine = sin(PI * uProgress);
-  float distortion = 0.1;
-  float numberofWaves = 5.0;
+  float distortion = 0.075;
+  float numberofWaves = 5.;
   float waveLength = 2.;
 
   float waves = sine * distortion * sin(numberofWaves * length(uv) + waveLength * uProgress);
@@ -56,7 +56,7 @@ void main()
   fullScreenState.x *=  uResolution.x;
   fullScreenState.y *=  uResolution.y;
 
-  modelPosition.z += sin(modelPosition.x * 1.0) * 5. * uScrollY;
+  modelPosition.z += sin(modelPosition.x) * 2. * uScrollY;
 // =============================================== HALF OF SCREEN EFFECT ===============================================
 
   vec4 mixedState = mix(modelPosition, fullScreenState, uProgress + waves);

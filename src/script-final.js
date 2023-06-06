@@ -55,6 +55,7 @@ class Scene {
     this.wholeWidth = this.n * this.margin;
     this.positionY = 0;
     this.onHome = true;
+    this.scrollDelta = 0;
 
     // Events
     this.scrollTarget = 0;
@@ -108,7 +109,6 @@ class Scene {
     this.addObjects();
     this.handleEventListeners();
     this.animate();
-    this.barbaInit();
     this.introAnim();
   }
 
@@ -140,7 +140,7 @@ class Scene {
       this.settings.meshHeight = 2.4;
       this.margin = 3.5;
       this.wholeWidth = this.n * this.margin;
-      this.positionY = 0.5;
+      this.positionY = 0.3;
     }
   }
 
@@ -247,7 +247,7 @@ class Scene {
 
     // ============ Scroll ============
     const handleMouseWheel = (event) => {
-      this.scrollTarget = event.wheelDeltaY * 0.3;
+      this.scrollTarget = event.wheelDeltaY * 0.2;
     };
     document.addEventListener("mousewheel", handleMouseWheel);
 
@@ -259,7 +259,7 @@ class Scene {
 
     const handleTouchMove = (e) => {
       this.touchEnd = e.touches[0].clientX;
-      this.scrollTarget = (this.touchEnd - this.touchStart) * 0.3;
+      this.scrollTarget = (this.touchEnd - this.touchStart) * 0.6;
     };
     document.addEventListener("touchmove", handleTouchMove);
 
@@ -281,27 +281,12 @@ class Scene {
         const { x } = this.currentIntersect.object.position;
         if (Math.abs(x) >= 0.05) {
           // if the user click on a plane on the left/right side -> centers it
-          this.scrollTarget =
-            this.sizes.width > 1600
-              ? 0
-              : -1 * (((x * this.ndcWidth * 2) / this.margin) * 10);
-          // take into account the size of the screen
-          this.scrollTarget *= 0.8;
-        } else {
-          // if the user click on a plane on the center -> open the project
-          if (this.settings.progress === 0) {
-            // if the user click on a plane on the center -> open the project
-            gsap.to(this.settings, {
-              progress: 1,
-              duration: 0.8,
-              ease: Power3.easeInOut,
-            });
+          if (this.sizes.width < 768) {
+            this.scrollTarget = -1 * (x * this.ndcWidth);
+          } else if (this.sizes.width > 768 && this.sizes.width < 1600) {
+            this.scrollTarget = -1 * (x * this.ndcWidth) * 0.5;
           } else {
-            gsap.to(this.settings, {
-              progress: 0,
-              duration: 0.8,
-              ease: Power3.easeInOut,
-            });
+            this.scrollTarget = -1 * (x * this.ndcWidth) * 0.3;
           }
         }
       }
@@ -355,10 +340,9 @@ class Scene {
   }
 
   handleScroll() {
-    this.scrollSpead += (this.scrollTarget - this.scrollSpead) * 0.5;
-    this.scrollSpead *= 0.9;
+    this.scrollSpead += this.scrollTarget - this.scrollSpead * 0.3;
     this.scrollTarget *= 0.9;
-    this.currentScroll = this.scrollSpead * 0.5;
+    this.currentScroll = this.scrollSpead;
   }
 
   handleInfiniteCarousel() {
@@ -480,67 +464,13 @@ class Scene {
     this.scene.remove();
     this.renderer.dispose();
   }
-
-  barbaInit() {
-    let that = this;
-
-    barba.init({
-      transitions: [
-        {
-          name: "from-home-page-transition",
-          from: {
-            namespace: ["home"],
-          },
-          leave(data) {
-            // LEAVING HOME
-            const tl = gsap.timeline();
-            return tl.to(that.settings, {
-              progress: 1,
-              duration: 0.8,
-              ease: Power3.easeInOut,
-            });
-          },
-          afterLeave(data) {
-            that.cleanUp();
-            that.onHome = false;
-          },
-          enter(data) {
-            insideAnim();
-          },
-        },
-        {
-          name: "from-page-to-home",
-          from: {
-            namespace: ["inside"],
-          },
-          leave(data) {
-            // LEAVING PROJECT PAGE
-            const tl = gsap.timeline();
-            return tl.to(data.current.container, {
-              x: "-100%",
-            });
-          },
-          beforeEnter(data) {
-            that.onHome = true;
-            that.init();
-            data.next.container.style.transform = "translateX(100%)";
-          },
-          enter(data) {
-            gsap.to(data.next.container, {
-              x: "0%",
-              duration: 0.8,
-              ease: Power3.easeInOut,
-            });
-          },
-        },
-      ],
-    });
-  }
 }
 
-async function barbaInit() {
-  let that = this;
+const scene = new Scene(content);
 
+console.log(scene);
+
+async function barbaInit() {
   barba.init({
     transitions: [
       {
@@ -548,20 +478,20 @@ async function barbaInit() {
         from: {
           namespace: ["home"],
         },
-        leave(data) {
+        leave() {
           // LEAVING HOME
           const tl = gsap.timeline();
-          return tl.to(that.settings, {
+          return tl.to(scene.settings, {
             progress: 1,
             duration: 0.8,
             ease: Power3.easeInOut,
           });
         },
-        afterLeave(data) {
-          that.cleanUp();
-          that.onHome = false;
+        afterLeave() {
+          scene.cleanUp();
+          scene.onHome = false;
         },
-        enter(data) {
+        enter() {
           insideAnim();
         },
       },
@@ -578,8 +508,8 @@ async function barbaInit() {
           });
         },
         beforeEnter(data) {
-          that.onHome = true;
-          that.init();
+          scene.onHome = true;
+          scene.init();
           data.next.container.style.transform = "translateX(100%)";
         },
         enter(data) {
@@ -594,8 +524,9 @@ async function barbaInit() {
   });
 }
 
+barbaInit();
+
 // Create an instance of the Scene class
-new Scene(content);
 
 // Export the Scene class if needed
 export default Scene;
