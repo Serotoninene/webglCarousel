@@ -282,11 +282,11 @@ class Scene {
         if (Math.abs(x) >= 0.05) {
           // if the user click on a plane on the left/right side -> centers it
           if (this.sizes.width < 768) {
-            this.scrollTarget = -1 * (x * this.ndcWidth);
+            this.scrollTarget = -1 * (x * this.ndcWidth) * 2.3;
           } else if (this.sizes.width > 768 && this.sizes.width < 1600) {
-            this.scrollTarget = -1 * (x * this.ndcWidth) * 0.5;
+            this.scrollTarget = -1 * (x * this.ndcWidth) * 0.7;
           } else {
-            this.scrollTarget = -1 * (x * this.ndcWidth) * 0.3;
+            this.scrollTarget = -1 * (x * this.ndcWidth) * 0.5;
           }
         }
       }
@@ -340,7 +340,7 @@ class Scene {
   }
 
   handleScroll() {
-    this.scrollSpead += this.scrollTarget - this.scrollSpead * 0.3;
+    this.scrollSpead += this.scrollTarget - this.scrollSpead * 0.5;
     this.scrollTarget *= 0.9;
     this.currentScroll = this.scrollSpead;
   }
