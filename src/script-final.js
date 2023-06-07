@@ -45,7 +45,7 @@ class Scene {
       progress: 1,
       meshWidth: 1.4,
       meshHeight: 2.2,
-      snapDelta: 0.717,
+      snapDelta: 0.917,
     };
 
     // Params
@@ -361,7 +361,7 @@ class Scene {
       let diff = rounded - mesh.position.x;
       mesh.position.x += THREE.MathUtils.lerp(
         0,
-        Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.04,
+        Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.01,
         this.settings.snapDelta
       );
 
@@ -468,8 +468,6 @@ class Scene {
 
 const scene = new Scene(content);
 
-console.log(scene);
-
 async function barbaInit() {
   barba.init({
     transitions: [
@@ -481,11 +479,13 @@ async function barbaInit() {
         leave() {
           // LEAVING HOME
           const tl = gsap.timeline();
-          return tl.to(scene.settings, {
+
+          tl.to(scene.settings, {
             progress: 1,
             duration: 0.8,
             ease: Power3.easeInOut,
           });
+          return tl;
         },
         afterLeave() {
           scene.cleanUp();
