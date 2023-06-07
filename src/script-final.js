@@ -259,7 +259,7 @@ class Scene {
 
     const handleTouchMove = (e) => {
       this.touchEnd = e.touches[0].clientX;
-      this.scrollTarget = (this.touchEnd - this.touchStart) * 0.6;
+      this.scrollTarget = (this.touchEnd - this.touchStart) * 0.07;
     };
     document.addEventListener("touchmove", handleTouchMove);
 
