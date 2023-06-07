@@ -247,7 +247,7 @@ class Scene {
 
     // ============ Scroll ============
     const handleMouseWheel = (event) => {
-      this.scrollTarget = event.wheelDeltaY * 0.2;
+      this.scrollTarget = event.wheelDeltaY * 0.05;
     };
     document.addEventListener("mousewheel", handleMouseWheel);
 
