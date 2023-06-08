@@ -137,12 +137,20 @@ footer {
   opacity: 0;
 }
 
-.image.fullWidth {
+.is-first-img.fullWidth {
   grid-column: span 2;
 }
 
-.inside-container .image {
+.inside-container .is-first-img {
   width: 100%;
+  height: 100dvh;
+  object-position: center;
+}
+
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* MEDIA QUERIES */

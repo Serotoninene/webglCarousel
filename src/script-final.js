@@ -3,6 +3,9 @@ import gsap, { Power3 } from "gsap";
 import vertexShader from "./shaders/picture/vertex.glsl";
 import barba from "@barba/core";
 import { insideAnim } from "./inside";
+import { Flip } from "gsap/Flip";
+
+gsap.registerPlugin(Flip);
 
 const content = [
   {
@@ -110,6 +113,7 @@ class Scene {
     this.handleEventListeners();
     this.animate();
     this.introAnim();
+    this.barbaInit();
   }
 
   async init() {
@@ -288,6 +292,9 @@ class Scene {
           } else {
             this.scrollTarget = -1 * (x * this.ndcWidth) * 0.5;
           }
+        } else {
+          // if the user click on a plane on the center -> redirects toward the project page
+          barba.go("./inside.html");
         }
       }
     };
@@ -464,67 +471,80 @@ class Scene {
     this.scene.remove();
     this.renderer.dispose();
   }
+
+  barbaInit() {
+    let that = this;
+    barba.init({
+      transitions: [
+        {
+          name: "from-home-page-transition",
+          from: {
+            namespace: ["home"],
+          },
+          leave() {
+            // LEAVING HOME
+            const tl = gsap.timeline();
+
+            tl.to(that.settings, {
+              progress: 1,
+              duration: 0.8,
+              ease: Power3.easeInOut,
+            });
+            return tl;
+          },
+          afterLeave() {
+            that.cleanUp();
+            that.onHome = false;
+          },
+          enter() {
+            const image = document.querySelector(".is-first-img");
+            // image.style.width = "100vw";
+            const state = Flip.getState(".inside-container .is-first-img");
+            image.classList.remove("fullWidth");
+
+            Flip.from(state, {
+              duration: 1,
+              delay: 0.5,
+              ease: Power3.easeOut,
+              onComplete: () => {
+                gsap.to(".container", { opacity: 1 });
+              },
+            });
+          },
+        },
+        {
+          name: "from-page-to-home",
+          from: {
+            namespace: ["cms-projet"],
+          },
+          leave(data) {
+            // LEAVING PROJECT PAGE
+            const tl = gsap.timeline();
+            return tl.to(data.current.container, {
+              x: "-100%",
+            });
+          },
+          beforeEnter(data) {
+            that.onHome = true;
+            that.init();
+            data.next.container.style.transform = "translateX(100%)";
+          },
+          enter(data) {
+            gsap.to(data.next.container, {
+              x: "0%",
+              duration: 0.8,
+              ease: Power3.easeInOut,
+            });
+          },
+        },
+      ],
+    });
+  }
 }
 
 const scene = new Scene(content);
 
-async function barbaInit() {
-  barba.init({
-    transitions: [
-      {
-        name: "from-home-page-transition",
-        from: {
-          namespace: ["home"],
-        },
-        leave() {
-          // LEAVING HOME
-          const tl = gsap.timeline();
-
-          tl.to(scene.settings, {
-            progress: 1,
-            duration: 0.8,
-            ease: Power3.easeInOut,
-          });
-          return tl;
-        },
-        afterLeave() {
-          scene.cleanUp();
-          scene.onHome = false;
-        },
-        enter() {
-          insideAnim();
-        },
-      },
-      {
-        name: "from-page-to-home",
-        from: {
-          namespace: ["inside"],
-        },
-        leave(data) {
-          // LEAVING PROJECT PAGE
-          const tl = gsap.timeline();
-          return tl.to(data.current.container, {
-            x: "-100%",
-          });
-        },
-        beforeEnter(data) {
-          scene.onHome = true;
-          scene.init();
-          data.next.container.style.transform = "translateX(100%)";
-        },
-        enter(data) {
-          gsap.to(data.next.container, {
-            x: "0%",
-            duration: 0.8,
-            ease: Power3.easeInOut,
-          });
-        },
-      },
-    ],
-  });
-}
-
-barbaInit();
+async function barbaInit() {}
 
 // Create an instance of the Scene class
 
