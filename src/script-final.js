@@ -48,7 +48,7 @@ class Scene {
       progress: 1,
       meshWidth: 1.4,
       meshHeight: 2.2,
-      snapDelta: 0.917,
+      snapDelta: 0.717,
     };
 
     // Params
@@ -251,7 +251,7 @@ class Scene {
 
     // ============ Scroll ============
     const handleMouseWheel = (event) => {
-      this.scrollTarget = event.wheelDeltaY * 0.05;
+      this.scrollTarget = event.wheelDeltaY * 0.1;
     };
     document.addEventListener("mousewheel", handleMouseWheel);
 
@@ -283,15 +283,13 @@ class Scene {
     const handleClick = () => {
       if (this.currentIntersect) {
         const { x } = this.currentIntersect.object.position;
+
         if (Math.abs(x) >= 0.05) {
           // if the user click on a plane on the left/right side -> centers it
-          if (this.sizes.width < 768) {
-            this.scrollTarget = -1 * (x * this.ndcWidth) * 2.3;
-          } else if (this.sizes.width > 768 && this.sizes.width < 1600) {
-            this.scrollTarget = -1 * (x * this.ndcWidth) * 0.7;
-          } else {
-            this.scrollTarget = -1 * (x * this.ndcWidth) * 0.5;
-          }
+          const scrollMultiplier =
+            this.sizes.width < 768 ? 2.3 : this.sizes.width < 1400 ? 3 : 0.5;
+
+          this.scrollTarget = 0;
         } else {
           // if the user click on a plane on the center -> redirects toward the project page
           barba.go("./inside.html");
@@ -368,7 +366,7 @@ class Scene {
       let diff = rounded - mesh.position.x;
       mesh.position.x += THREE.MathUtils.lerp(
         0,
-        Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.01,
+        Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.1,
         this.settings.snapDelta
       );
 
@@ -467,6 +465,8 @@ class Scene {
     window.cancelAnimationFrame(this.animate);
     this.meshes = [];
     this.material = [];
+    this.positionY = 0;
+    this.currentIntersect = null;
     this.scene.remove(this.scene.children);
     this.scene.remove();
     this.renderer.dispose();
@@ -484,7 +484,12 @@ class Scene {
           leave() {
             // LEAVING HOME
             const tl = gsap.timeline();
-
+            const content = gsap.utils.toArray(".text *");
+            // tl.to(content, {
+            //   opacity: 0,
+            //   duration: 0.8,
+            //   stagger: 0.25,
+            // });
             tl.to(that.settings, {
               progress: 1,
               duration: 0.8,
