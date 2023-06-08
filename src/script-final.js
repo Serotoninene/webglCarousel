@@ -2,7 +2,6 @@ import * as THREE from "three";
 import gsap, { Power3 } from "gsap";
 import vertexShader from "./shaders/picture/vertex.glsl";
 import barba from "@barba/core";
-import { insideAnim } from "./inside";
 import { Flip } from "gsap/Flip";
 
 gsap.registerPlugin(Flip);
@@ -13,30 +12,35 @@ const content = [
     h2: "Extension d’une maison sur le port",
     h3: "description",
     img: "/textures/texture1.jpg",
+    href: "/1",
   },
   {
     id: 2,
     h2: "Titre 1",
     h3: "description",
     img: "/textures/texture2.jpg",
+    href: "/2",
   },
   {
     id: 3,
     h2: "Titre 2",
     h3: "description",
     img: "/textures/texture3.jpg",
+    href: "/3",
   },
   {
     id: 4,
     h2: "Titre 3",
     h3: "description",
     img: "/textures/texture4.jpg",
+    href: "/4",
   },
   {
     id: 5,
     h2: "Titre 4",
     h3: "description",
     img: "/textures/texture5.jpg",
+    href: "/5",
   },
 ];
 
@@ -251,7 +255,7 @@ class Scene {
 
     // ============ Scroll ============
     const handleMouseWheel = (event) => {
-      this.scrollTarget = event.wheelDeltaY * 0.1;
+      this.scrollTarget = event.wheelDeltaY * 0.035;
     };
     document.addEventListener("mousewheel", handleMouseWheel);
 
@@ -287,12 +291,20 @@ class Scene {
         if (Math.abs(x) >= 0.05) {
           // if the user click on a plane on the left/right side -> centers it
           const scrollMultiplier =
-            this.sizes.width < 768 ? 2.3 : this.sizes.width < 1400 ? 3 : 0.5;
+            this.sizes.width < 600
+              ? 2
+              : this.sizes.width < 1280
+              ? 1
+              : this.sizes.width < 2000
+              ? 0.7
+              : 0.3;
 
-          this.scrollTarget = 0;
+          this.scrollTarget = -x * this.ndcWidth * scrollMultiplier;
         } else {
           // if the user click on a plane on the center -> redirects toward the project page
-          barba.go("./inside.html");
+          console.log(this.data);
+          console.log(this.currentPlane);
+          barba.go(this.data[this.currentPlane].href);
         }
       }
     };
@@ -364,11 +376,8 @@ class Scene {
       // ======== snapping ========
       let rounded = Math.round(mesh.position.x / this.margin) * this.margin;
       let diff = rounded - mesh.position.x;
-      mesh.position.x += THREE.MathUtils.lerp(
-        0,
-        Math.sign(diff) * Math.pow(Math.abs(diff), 0.5) * 0.1,
-        this.settings.snapDelta
-      );
+      diff *= 0.5;
+      mesh.position.x += THREE.MathUtils.lerp(0, diff * 0.1, 0.9);
 
       // ======== rotation  ========
       mesh.rotation.z = mesh.position.x * -0.1;
@@ -384,7 +393,7 @@ class Scene {
       }
 
       // define if the user is currently scrolling or no
-      if (Math.abs(diff) <= 0.002) {
+      if (Math.abs(diff) <= 0.02) {
         this.isInMotion = false;
       } else {
         this.isInMotion = true;
@@ -394,6 +403,7 @@ class Scene {
 
   handleWording() {
     if (!this.onHome) return;
+    const linkContainer = document.querySelector(".link-home");
     const projectIndex = document.querySelector(".project-index");
     const projectName = document.querySelector(".project-name");
     const projectLocation = document.querySelector(".project-location");
@@ -410,6 +420,7 @@ class Scene {
       const index = this.data[this.currentPlane].id.toString().padStart(2, "0");
       const name = this.data[this.currentPlane].h2;
       const location = this.data[this.currentPlane].h3;
+      linkContainer.href = "./inside.html";
       projectIndex.textContent = `[${index}]`;
       projectName.textContent = name;
       projectLocation.textContent = location;
@@ -549,8 +560,9 @@ class Scene {
 
 const scene = new Scene(content);
 
-async function barbaInit() {}
-
+// barba.hooks.after(() => {
+//   scene.barbaInit();
+// });
 // Create an instance of the Scene class
 
 // Export the Scene class if needed
